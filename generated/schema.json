@@ -1,0 +1,1253 @@
+{
+  "schema_version": "companion-2026.09.1",
+  "insert_order": [
+    "document",
+    "contract",
+    "contract_party",
+    "contract_item",
+    "sph",
+    "extraction_run",
+    "bast",
+    "bast_party",
+    "bast_item",
+    "bast_condition",
+    "extracted_field",
+    "field_review",
+    "bast_draft"
+  ],
+  "tables": [
+    {
+      "name": "document",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "content_hash",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "unique": true,
+          "note": "sha1 isi berkas -- kunci idempotensi; proses ulang = UPDATE"
+        },
+        {
+          "name": "doc_type",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "contract",
+            "sph",
+            "bast"
+          ]
+        },
+        {
+          "name": "source_filename",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true
+        },
+        {
+          "name": "page_count",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "check": "page_count > 0"
+        },
+        {
+          "name": "markdown",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false,
+          "note": "markdown utuh; PM membaca tanpa membuka PDF"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Supertipe: setiap berkas yang masuk, apa pun jenisnya."
+    },
+    {
+      "name": "contract",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "document_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "unique": true,
+          "fk": "document.id",
+          "on_delete": "CASCADE",
+          "note": "UNIQUE -> 1:1 dengan document"
+        },
+        {
+          "name": "contract_number",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "nomor kontrak resmi / SPK / PKS"
+        },
+        {
+          "name": "contract_number_internal",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "nomor registrasi internal BUT"
+        },
+        {
+          "name": "work_title",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": true,
+          "note": "judul pengadaan / lingkup pekerjaan"
+        },
+        {
+          "name": "contract_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "contract_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "start_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "end_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "duration_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "contract_value",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "contract_value >= 0"
+        },
+        {
+          "name": "subtotal_value",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "subtotal_value >= 0"
+        },
+        {
+          "name": "vat_value",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "vat_value >= 0"
+        },
+        {
+          "name": "vat_percentage",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "currency",
+          "type": "char3",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "note": "default IDR"
+        },
+        {
+          "name": "payment_mechanism",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "penalty_terms",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "bast_terms",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "bank_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "bank_account_number",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "bank_account_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Subtipe Kontrak/SPK/PKS sebagai sumber data utama penyusunan draf BAST."
+    },
+    {
+      "name": "contract_party",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "contract_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "contract.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "first_party",
+            "second_party",
+            "client",
+            "contractor"
+          ],
+          "note": "first_party/client (pemberi kerja) vs second_party/contractor (pelaksana)"
+        },
+        {
+          "name": "org_name_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true
+        },
+        {
+          "name": "signer_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true
+        },
+        {
+          "name": "signer_title",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "org_address_text",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "npwp",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "mybhakti_party_ref",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "contract_id",
+          "role"
+        ]
+      ],
+      "note": "Pihak penandatangan dalam kontrak."
+    },
+    {
+      "name": "contract_item",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "contract_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "contract.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "line_no",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "check": "line_no > 0"
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": true
+        },
+        {
+          "name": "specification",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "quantity",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false,
+          "check": "quantity >= 0"
+        },
+        {
+          "name": "unit",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "period",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "unit_price >= 0"
+        },
+        {
+          "name": "line_total",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "line_total >= 0"
+        },
+        {
+          "name": "remarks",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "contract_id",
+          "line_no"
+        ]
+      ],
+      "note": "Tabel Rincian Pekerjaan / BoQ Kontrak. Disimpan untuk direplikasi 1-to-1 persis ke BAST."
+    },
+    {
+      "name": "sph",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "document_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "unique": true,
+          "fk": "document.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "sph_number",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "sph_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "sph_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "project_name",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "client_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "total_price",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "total_price >= 0"
+        },
+        {
+          "name": "currency",
+          "type": "char3",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "note": "default IDR"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Ekstraksi Surat Penawaran Harga (SPH) sebagai dokumen hulu."
+    },
+    {
+      "name": "bast_draft",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "contract_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "contract.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "draft_bast_number",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "work_title",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": true
+        },
+        {
+          "name": "handover_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "handover_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "handover_city",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "draft",
+            "pending_review",
+            "approved",
+            "generated",
+            "rejected"
+          ]
+        },
+        {
+          "name": "template_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "format_telkom | format_kampus | format_instansi"
+        },
+        {
+          "name": "acceptance_statement",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "generated_doc_url",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "generated_bast_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "fk": "bast.id",
+          "on_delete": "RESTRICT",
+          "note": "terisi saat status=generated; tanpa ini, kontrak yang di-generate ulang membuat PM tidak tahu draf mana menghasilkan BAST yang mana"
+        },
+        {
+          "name": "approved_by",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "HANYA diisi manusia (PM)"
+        },
+        {
+          "name": "approved_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": false,
+          "note": "HANYA diisi manusia (PM)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Draf BAST yang di-generate otomatis dari data Kontrak/SPH setelah diverifikasi PM."
+    },
+    {
+      "name": "extraction_run",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "document_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "document.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "ocr_engine",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "llm_model",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "prompt_version",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "schema_version",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "llm_call_count",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false
+        },
+        {
+          "name": "parse_seconds",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false
+        },
+        {
+          "name": "extract_seconds",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false
+        },
+        {
+          "name": "validation_status",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "started_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Jejak tiap pemrosesan -- dasar bukti 'Terukur' (briefing hlm. 21)."
+    },
+    {
+      "name": "bast",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "document_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "unique": true,
+          "fk": "document.id",
+          "on_delete": "CASCADE",
+          "note": "UNIQUE -> 1:1 dengan document"
+        },
+        {
+          "name": "direction",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "customer",
+            "vendor",
+            "unknown"
+          ],
+          "note": "customer = kita->pelanggan; vendor = vendor->kita (hlm. 10)"
+        },
+        {
+          "name": "contract_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "fk": "contract.id",
+          "on_delete": "RESTRICT",
+          "note": "hanya untuk direction=customer"
+        },
+        {
+          "name": "mybhakti_po_ref",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "rujukan opak ke MyBhakti, diisi n8n -- SENGAJA bukan FK (hlm. 7)"
+        },
+        {
+          "name": "bast_number_customer",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "nomor versi pelanggan"
+        },
+        {
+          "name": "bast_number_internal",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "nomor versi BUT"
+        },
+        {
+          "name": "handover_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "apa adanya di dokumen"
+        },
+        {
+          "name": "handover_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false,
+          "note": "hasil parse; NULL kalau gagal"
+        },
+        {
+          "name": "handover_city",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "work_title",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": true
+        },
+        {
+          "name": "basis_doc_type",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": false,
+          "enum": [
+            "contract",
+            "pks",
+            "spk",
+            "order_note",
+            "purchase_order",
+            "other"
+          ]
+        },
+        {
+          "name": "basis_doc_number",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "seperti tercetak"
+        },
+        {
+          "name": "basis_doc_date_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "basis_doc_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "basis_doc_value",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "basis_doc_value >= 0"
+        },
+        {
+          "name": "basis_doc_value_vat",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": false,
+          "enum": [
+            "included",
+            "excluded",
+            "unstated"
+          ]
+        },
+        {
+          "name": "currency",
+          "type": "char3",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "note": "default IDR"
+        },
+        {
+          "name": "acceptance_statement",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Subtipe BAST. Kolom di sini hanya butir Tier 1-2 (selalu/hampir selalu ada)."
+    },
+    {
+      "name": "bast_party",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "bast_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "bast.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "handover",
+            "receiver"
+          ],
+          "note": "peran, BUKAN 'Pihak Pertama/Kedua' -- label itu terbalik antar-format"
+        },
+        {
+          "name": "org_name_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "note": "nama seperti ditandatangani"
+        },
+        {
+          "name": "signer_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true
+        },
+        {
+          "name": "signer_title",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "org_address_text",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "mybhakti_party_ref",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "opak, diisi n8n"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "bast_id",
+          "role"
+        ]
+      ],
+      "note": "Tepat 2 baris per BAST. Cuplikan saat penandatanganan -- jabatan berubah, dokumen yang sudah diteken tidak boleh ikut berubah."
+    },
+    {
+      "name": "bast_item",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "bast_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "bast.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "line_no",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "check": "line_no > 0"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": true
+        },
+        {
+          "name": "quantity",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false,
+          "check": "quantity >= 0"
+        },
+        {
+          "name": "unit",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "unit_price >= 0"
+        },
+        {
+          "name": "line_total",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "line_total >= 0"
+        },
+        {
+          "name": "test_result",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "remarks",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "bast_id",
+          "line_no"
+        ]
+      ],
+      "note": "Harga boleh NULL: format kampus/vendor/instansi tidak memuatnya."
+    },
+    {
+      "name": "bast_condition",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "bast_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "bast.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "condition_type",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "progress_percent",
+            "service_active_since",
+            "acceptance_test_ref",
+            "delivery_reconciliation_ref",
+            "supporting_document",
+            "amount_in_words"
+          ]
+        },
+        {
+          "name": "value_text",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "value_number",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false
+        },
+        {
+          "name": "value_date",
+          "type": "date",
+          "nocodb_type": "Date",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "note": "Fakta Tier 3 sebagai BARIS. Fakta baru = nilai condition_type baru, bukan kolom baru."
+    },
+    {
+      "name": "extracted_field",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "document_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "document.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "field_path",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "note": "mis. bast.work_title"
+        },
+        {
+          "name": "ai_value_text",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "evidence_page",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "note": "dihitung deterministik, BUKAN ditulis LLM"
+        },
+        {
+          "name": "evidence_quote",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false,
+          "note": "potongan teks OCR yang cocok"
+        },
+        {
+          "name": "evidence_score",
+          "type": "numeric",
+          "nocodb_type": "Percent",
+          "required": false
+        },
+        {
+          "name": "system_status",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "auto_verified",
+            "auto_accepted",
+            "review_required",
+            "unsupported",
+            "conflict",
+            "missing"
+          ]
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "document_id",
+          "field_path"
+        ]
+      ],
+      "note": "Ditulis MESIN saja. Nilai terbaru per field."
+    },
+    {
+      "name": "field_review",
+      "written_by": "human",
+      "columns": [
+        {
+          "name": "document_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "document.id",
+          "on_delete": "RESTRICT",
+          "note": "RESTRICT: dokumen dengan keputusan PM tidak boleh terhapus diam-diam"
+        },
+        {
+          "name": "field_path",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true
+        },
+        {
+          "name": "reviewed_ai_value_text",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false,
+          "note": "nilai AI yang DILIHAT PM saat memutuskan; kalau nilai AI berubah, konfirmasi lama tidak berlaku untuk nilai baru"
+        },
+        {
+          "name": "decision",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": true,
+          "enum": [
+            "confirmed",
+            "corrected",
+            "rejected"
+          ]
+        },
+        {
+          "name": "final_value_text",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "reviewed_by",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true
+        },
+        {
+          "name": "reviewer_note",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "document_id",
+          "field_path"
+        ]
+      ],
+      "note": "Ditulis MANUSIA saja. Pipeline tidak pernah menulis ke sini (hlm. 11 & 20)."
+    }
+  ]
+}

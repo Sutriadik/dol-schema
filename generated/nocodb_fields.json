@@ -1,0 +1,616 @@
+{
+  "schema_version": "companion-2026.09.1",
+  "tables": {
+    "document": [
+      {
+        "title": "content_hash",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "doc_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "contract",
+          "sph",
+          "bast"
+        ]
+      },
+      {
+        "title": "source_filename",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "page_count",
+        "uidt": "Number"
+      },
+      {
+        "title": "markdown",
+        "uidt": "LongText"
+      }
+    ],
+    "contract": [
+      {
+        "title": "document_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "contract_number",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "contract_number_internal",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "work_title",
+        "uidt": "LongText"
+      },
+      {
+        "title": "contract_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "contract_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "start_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "start_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "end_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "end_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "duration_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "contract_value",
+        "uidt": "Currency"
+      },
+      {
+        "title": "subtotal_value",
+        "uidt": "Currency"
+      },
+      {
+        "title": "vat_value",
+        "uidt": "Currency"
+      },
+      {
+        "title": "vat_percentage",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "currency",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "payment_mechanism",
+        "uidt": "LongText"
+      },
+      {
+        "title": "penalty_terms",
+        "uidt": "LongText"
+      },
+      {
+        "title": "bast_terms",
+        "uidt": "LongText"
+      },
+      {
+        "title": "bank_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "bank_account_number",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "bank_account_name",
+        "uidt": "SingleLineText"
+      }
+    ],
+    "contract_party": [
+      {
+        "title": "contract_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "role",
+        "uidt": "SingleSelect",
+        "options": [
+          "first_party",
+          "second_party",
+          "client",
+          "contractor"
+        ]
+      },
+      {
+        "title": "org_name_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "signer_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "signer_title",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "org_address_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "npwp",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "mybhakti_party_ref",
+        "uidt": "SingleLineText"
+      }
+    ],
+    "contract_item": [
+      {
+        "title": "contract_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "line_no",
+        "uidt": "Number"
+      },
+      {
+        "title": "category",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "description",
+        "uidt": "LongText"
+      },
+      {
+        "title": "specification",
+        "uidt": "LongText"
+      },
+      {
+        "title": "quantity",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "unit",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "period",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "unit_price",
+        "uidt": "Currency"
+      },
+      {
+        "title": "line_total",
+        "uidt": "Currency"
+      },
+      {
+        "title": "remarks",
+        "uidt": "LongText"
+      }
+    ],
+    "sph": [
+      {
+        "title": "document_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "sph_number",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "sph_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "sph_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "project_name",
+        "uidt": "LongText"
+      },
+      {
+        "title": "client_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "total_price",
+        "uidt": "Currency"
+      },
+      {
+        "title": "currency",
+        "uidt": "SingleLineText"
+      }
+    ],
+    "bast_draft": [
+      {
+        "title": "contract_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "draft_bast_number",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "work_title",
+        "uidt": "LongText"
+      },
+      {
+        "title": "handover_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "handover_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "handover_city",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "status",
+        "uidt": "SingleSelect",
+        "options": [
+          "draft",
+          "pending_review",
+          "approved",
+          "generated",
+          "rejected"
+        ]
+      },
+      {
+        "title": "template_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "acceptance_statement",
+        "uidt": "LongText"
+      },
+      {
+        "title": "generated_doc_url",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "generated_bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "approved_by",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "approved_at",
+        "uidt": "DateTime"
+      }
+    ],
+    "extraction_run": [
+      {
+        "title": "document_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "ocr_engine",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "llm_model",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "prompt_version",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "schema_version",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "llm_call_count",
+        "uidt": "Number"
+      },
+      {
+        "title": "parse_seconds",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "extract_seconds",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "validation_status",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "started_at",
+        "uidt": "DateTime"
+      }
+    ],
+    "bast": [
+      {
+        "title": "document_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "direction",
+        "uidt": "SingleSelect",
+        "options": [
+          "customer",
+          "vendor",
+          "unknown"
+        ]
+      },
+      {
+        "title": "contract_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "mybhakti_po_ref",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "bast_number_customer",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "bast_number_internal",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "handover_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "handover_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "handover_city",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "work_title",
+        "uidt": "LongText"
+      },
+      {
+        "title": "basis_doc_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "contract",
+          "pks",
+          "spk",
+          "order_note",
+          "purchase_order",
+          "other"
+        ]
+      },
+      {
+        "title": "basis_doc_number",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "basis_doc_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "basis_doc_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "basis_doc_value",
+        "uidt": "Currency"
+      },
+      {
+        "title": "basis_doc_value_vat",
+        "uidt": "SingleSelect",
+        "options": [
+          "included",
+          "excluded",
+          "unstated"
+        ]
+      },
+      {
+        "title": "currency",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "acceptance_statement",
+        "uidt": "LongText"
+      }
+    ],
+    "bast_party": [
+      {
+        "title": "bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "role",
+        "uidt": "SingleSelect",
+        "options": [
+          "handover",
+          "receiver"
+        ]
+      },
+      {
+        "title": "org_name_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "signer_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "signer_title",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "org_address_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "mybhakti_party_ref",
+        "uidt": "SingleLineText"
+      }
+    ],
+    "bast_item": [
+      {
+        "title": "bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "line_no",
+        "uidt": "Number"
+      },
+      {
+        "title": "description",
+        "uidt": "LongText"
+      },
+      {
+        "title": "quantity",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "unit",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "unit_price",
+        "uidt": "Currency"
+      },
+      {
+        "title": "line_total",
+        "uidt": "Currency"
+      },
+      {
+        "title": "test_result",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "remarks",
+        "uidt": "LongText"
+      }
+    ],
+    "bast_condition": [
+      {
+        "title": "bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "condition_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "progress_percent",
+          "service_active_since",
+          "acceptance_test_ref",
+          "delivery_reconciliation_ref",
+          "supporting_document",
+          "amount_in_words"
+        ]
+      },
+      {
+        "title": "value_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "value_number",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "value_date",
+        "uidt": "Date"
+      }
+    ],
+    "extracted_field": [
+      {
+        "title": "document_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "field_path",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "ai_value_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "evidence_page",
+        "uidt": "Number"
+      },
+      {
+        "title": "evidence_quote",
+        "uidt": "LongText"
+      },
+      {
+        "title": "evidence_score",
+        "uidt": "Percent"
+      },
+      {
+        "title": "system_status",
+        "uidt": "SingleSelect",
+        "options": [
+          "auto_verified",
+          "auto_accepted",
+          "review_required",
+          "unsupported",
+          "conflict",
+          "missing"
+        ]
+      }
+    ],
+    "field_review": [
+      {
+        "title": "document_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "field_path",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "reviewed_ai_value_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "decision",
+        "uidt": "SingleSelect",
+        "options": [
+          "confirmed",
+          "corrected",
+          "rejected"
+        ]
+      },
+      {
+        "title": "final_value_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "reviewed_by",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "reviewed_at",
+        "uidt": "DateTime"
+      },
+      {
+        "title": "reviewer_note",
+        "uidt": "LongText"
+      }
+    ]
+  }
+}
