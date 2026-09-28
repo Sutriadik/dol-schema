@@ -94,6 +94,7 @@ def to_nocodb_fields() -> Dict[str, Any]:
     """Spesifikasi kolom siap pakai untuk membuat tabel lewat API NocoDB.
 
     `id`, `created_at`, `updated_at` tidak disertakan: NocoDB membuatnya sendiri.
+    Tabel bertanda `nocodb=False` juga tidak disertakan sama sekali.
     """
     auto = {"created_at", "updated_at"}
     return {
@@ -104,7 +105,7 @@ def to_nocodb_fields() -> Dict[str, Any]:
                  **({"options": list(c.enum)} if c.enum else {})}
                 for c in t.columns if c.name not in auto
             ]
-            for t in ALL_TABLES
+            for t in ALL_TABLES if t.nocodb
         },
     }
 

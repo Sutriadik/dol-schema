@@ -6,6 +6,7 @@
     "contract_party",
     "contract_item",
     "sph",
+    "sph_item",
     "extraction_run",
     "bast",
     "bast_party",
@@ -458,20 +459,70 @@
           "name": "project_name",
           "type": "text",
           "nocodb_type": "LongText",
-          "required": false
+          "required": false,
+          "note": "perihal / nama pekerjaan yang ditawarkan"
         },
         {
           "name": "client_name",
           "type": "text",
           "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "instansi yang dituju surat"
+        },
+        {
+          "name": "vendor_name",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "penerbit SPH -- kunci pembanding antar-vendor"
+        },
+        {
+          "name": "vendor_npwp",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
           "required": false
+        },
+        {
+          "name": "subtotal_value",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "subtotal_value >= 0"
+        },
+        {
+          "name": "vat_percentage",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "apa adanya di dokumen; sering berupa frasa"
+        },
+        {
+          "name": "vat_value",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "vat_value >= 0"
         },
         {
           "name": "total_price",
           "type": "numeric",
           "nocodb_type": "Currency",
           "required": false,
-          "check": "total_price >= 0"
+          "check": "total_price >= 0",
+          "note": "grand total"
+        },
+        {
+          "name": "validity_text",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "masa berlaku penawaran, mis. '30 hari'"
+        },
+        {
+          "name": "payment_mechanism",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
         },
         {
           "name": "currency",
@@ -496,6 +547,117 @@
         }
       ],
       "note": "Ekstraksi Surat Penawaran Harga (SPH) sebagai dokumen hulu."
+    },
+    {
+      "name": "sph_item",
+      "written_by": "machine",
+      "columns": [
+        {
+          "name": "sph_id",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "sph.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "line_no",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "check": "line_no > 0"
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": true
+        },
+        {
+          "name": "specification",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "brand",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "part_number",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "quantity",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false,
+          "check": "quantity >= 0"
+        },
+        {
+          "name": "unit",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "period",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "unit_price >= 0"
+        },
+        {
+          "name": "line_total",
+          "type": "numeric",
+          "nocodb_type": "Currency",
+          "required": false,
+          "check": "line_total >= 0"
+        },
+        {
+          "name": "remarks",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "sph_id",
+          "line_no"
+        ]
+      ],
+      "note": "BoQ penawaran vendor. Dasar price matching & tabel banding antar-vendor (briefing hlm. 14, Bulan 3 & 5) -- tanpa tabel ini, perbandingan harga per baris tidak mungkin dilakukan."
     },
     {
       "name": "bast_draft",
@@ -692,7 +854,7 @@
           "note": "UTC, diperbarui trigger"
         }
       ],
-      "note": "Jejak tiap pemrosesan -- dasar bukti 'Terukur' (briefing hlm. 21)."
+      "note": "Jejak tiap pemrosesan -- dasar bukti 'Terukur' (briefing hlm. 21). Tetap di PostgreSQL untuk audit internal, TIDAK pernah dikirim ke NocoDB: arahan Delivery Ops, NocoDB hanya memuat nilai ekstraksi + confidence score, bukan metadata teknis AI (engine OCR, model LLM, runtime)."
     },
     {
       "name": "bast",

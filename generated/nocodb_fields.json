@@ -230,12 +230,94 @@
         "uidt": "SingleLineText"
       },
       {
+        "title": "vendor_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "vendor_npwp",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "subtotal_value",
+        "uidt": "Currency"
+      },
+      {
+        "title": "vat_percentage",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "vat_value",
+        "uidt": "Currency"
+      },
+      {
         "title": "total_price",
         "uidt": "Currency"
       },
       {
+        "title": "validity_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "payment_mechanism",
+        "uidt": "LongText"
+      },
+      {
         "title": "currency",
         "uidt": "SingleLineText"
+      }
+    ],
+    "sph_item": [
+      {
+        "title": "sph_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "line_no",
+        "uidt": "Number"
+      },
+      {
+        "title": "category",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "description",
+        "uidt": "LongText"
+      },
+      {
+        "title": "specification",
+        "uidt": "LongText"
+      },
+      {
+        "title": "brand",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "part_number",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "quantity",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "unit",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "period",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "unit_price",
+        "uidt": "Currency"
+      },
+      {
+        "title": "line_total",
+        "uidt": "Currency"
+      },
+      {
+        "title": "remarks",
+        "uidt": "LongText"
       }
     ],
     "bast_draft": [
@@ -296,48 +378,6 @@
       },
       {
         "title": "approved_at",
-        "uidt": "DateTime"
-      }
-    ],
-    "extraction_run": [
-      {
-        "title": "document_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "ocr_engine",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "llm_model",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "prompt_version",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "schema_version",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "llm_call_count",
-        "uidt": "Number"
-      },
-      {
-        "title": "parse_seconds",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "extract_seconds",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "validation_status",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "started_at",
         "uidt": "DateTime"
       }
     ],

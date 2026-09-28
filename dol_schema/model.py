@@ -20,8 +20,8 @@ Model mengikuti docs/SKEMA_BAST_NOCODB.md. Prinsip yang ditegakkan struktur, buk
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import List, Optional
 
 SCHEMA_VERSION = "companion-2026.09.1"
 
@@ -46,6 +46,7 @@ class Table:
     unique_together: tuple = ()    # ((kolom, kolom), ...)
     note: str = ""
     written_by: str = "machine"    # machine | human -- didokumentasikan, bukan ditegakkan DB
+    nocodb: bool = True            # False = ada di PostgreSQL, tapi tidak pernah dikirim ke NocoDB
 
     def column(self, name: str) -> Optional[Column]:
         return next((c for c in self.columns if c.name == name), None)
@@ -99,7 +100,11 @@ TABLES: List[Table] = [
             Column("started_at", "timestamptz"),
             *_AUDIT,
         ],
-        note="Jejak tiap pemrosesan -- dasar bukti 'Terukur' (briefing hlm. 21).",
+        note="Jejak tiap pemrosesan -- dasar bukti 'Terukur' (briefing hlm. 21). "
+             "Tetap di PostgreSQL untuk audit internal, TIDAK pernah dikirim ke NocoDB: "
+             "arahan Delivery Ops, NocoDB hanya memuat nilai ekstraksi + confidence score, "
+             "bukan metadata teknis AI (engine OCR, model LLM, runtime).",
+        nocodb=False,
     ),
     Table(
         "bast",
@@ -292,13 +297,44 @@ TABLE_SPH = Table(
         Column("sph_number", "text"),
         Column("sph_date_text", "text"),
         Column("sph_date", "date"),
-        Column("project_name", "text"),
-        Column("client_name", "text"),
-        Column("total_price", "numeric", check="total_price >= 0"),
+        Column("project_name", "text", note="perihal / nama pekerjaan yang ditawarkan"),
+        Column("client_name", "text", note="instansi yang dituju surat"),
+        Column("vendor_name", "text", note="penerbit SPH -- kunci pembanding antar-vendor"),
+        Column("vendor_npwp", "text"),
+        Column("subtotal_value", "numeric", check="subtotal_value >= 0"),
+        Column("vat_percentage", "text", note="apa adanya di dokumen; sering berupa frasa"),
+        Column("vat_value", "numeric", check="vat_value >= 0"),
+        Column("total_price", "numeric", check="total_price >= 0", note="grand total"),
+        Column("validity_text", "text", note="masa berlaku penawaran, mis. '30 hari'"),
+        Column("payment_mechanism", "text"),
         Column("currency", "char3", null=False, note="default IDR"),
         *_AUDIT,
     ],
     note="Ekstraksi Surat Penawaran Harga (SPH) sebagai dokumen hulu.",
+)
+
+TABLE_SPH_ITEM = Table(
+    "sph_item",
+    [
+        Column("sph_id", "int", null=False, fk="sph.id"),
+        Column("line_no", "int", null=False, check="line_no > 0"),
+        Column("category", "text"),
+        Column("description", "text", null=False),
+        Column("specification", "text"),
+        Column("brand", "text"),
+        Column("part_number", "text"),
+        Column("quantity", "numeric", check="quantity >= 0"),
+        Column("unit", "text"),
+        Column("period", "text"),
+        Column("unit_price", "numeric", check="unit_price >= 0"),
+        Column("line_total", "numeric", check="line_total >= 0"),
+        Column("remarks", "text"),
+        *_AUDIT,
+    ],
+    unique_together=(("sph_id", "line_no"),),
+    note="BoQ penawaran vendor. Dasar price matching & tabel banding antar-vendor "
+         "(briefing hlm. 14, Bulan 3 & 5) -- tanpa tabel ini, perbandingan harga per "
+         "baris tidak mungkin dilakukan.",
 )
 
 TABLE_BAST_DRAFT = Table(
@@ -331,6 +367,7 @@ ALL_TABLES: List[Table] = [
     TABLE_CONTRACT_PARTY,    # contract_party
     TABLE_CONTRACT_ITEM,     # contract_item
     TABLE_SPH,               # sph
+    TABLE_SPH_ITEM,          # sph_item
     TABLE_BAST_DRAFT,        # bast_draft
     *TABLES[1:],             # extraction_run, bast, bast_party, bast_item, bast_condition, extracted_field, field_review
 ]

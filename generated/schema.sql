@@ -125,18 +125,60 @@ CREATE TABLE IF NOT EXISTS sph (
     sph_date                   date,
     project_name               text,
     client_name                text,
+    vendor_name                text,
+    vendor_npwp                text,
+    subtotal_value             numeric(18,2),
+    vat_percentage             text,
+    vat_value                  numeric(18,2),
     total_price                numeric(18,2),
+    validity_text              text,
+    payment_mechanism          text,
     currency                   char(3) NOT NULL DEFAULT 'IDR',
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT sph_subtotal_value_check CHECK (subtotal_value >= 0),
+    CONSTRAINT sph_vat_value_check CHECK (vat_value >= 0),
     CONSTRAINT sph_total_price_check CHECK (total_price >= 0)
 );
 DROP TRIGGER IF EXISTS trg_sph_updated_at ON sph;
 CREATE TRIGGER trg_sph_updated_at BEFORE UPDATE ON sph
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- BoQ penawaran vendor.
+-- Dasar price matching & tabel banding antar-vendor (briefing hlm.
+-- 14, Bulan 3 & 5) -- tanpa tabel ini, perbandingan harga per baris tidak mungkin dilakukan.
+-- Ditulis oleh: mesin (pipeline)
+CREATE TABLE IF NOT EXISTS sph_item (
+    id                         bigserial PRIMARY KEY,
+    sph_id                     integer NOT NULL REFERENCES sph(id) ON DELETE CASCADE,
+    line_no                    integer NOT NULL,
+    category                   text,
+    description                text NOT NULL,
+    specification              text,
+    brand                      text,
+    part_number                text,
+    quantity                   numeric(18,2),
+    unit                       text,
+    period                     text,
+    unit_price                 numeric(18,2),
+    line_total                 numeric(18,2),
+    remarks                    text,
+    created_at                 timestamptz NOT NULL DEFAULT now(),
+    updated_at                 timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (sph_id, line_no),
+    CONSTRAINT sph_item_line_no_check CHECK (line_no > 0),
+    CONSTRAINT sph_item_quantity_check CHECK (quantity >= 0),
+    CONSTRAINT sph_item_unit_price_check CHECK (unit_price >= 0),
+    CONSTRAINT sph_item_line_total_check CHECK (line_total >= 0)
+);
+CREATE INDEX IF NOT EXISTS idx_sph_item_sph_id ON sph_item(sph_id);
+DROP TRIGGER IF EXISTS trg_sph_item_updated_at ON sph_item;
+CREATE TRIGGER trg_sph_item_updated_at BEFORE UPDATE ON sph_item
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 -- Jejak tiap pemrosesan -- dasar bukti 'Terukur' (briefing hlm.
 -- 21).
+-- Tetap di PostgreSQL untuk audit internal, TIDAK pernah dikirim ke NocoDB: arahan Delivery Ops, NocoDB hanya memuat nilai ekstraksi + confidence score, bukan metadata teknis AI (engine OCR, model LLM, runtime).
 -- Ditulis oleh: mesin (pipeline)
 CREATE TABLE IF NOT EXISTS extraction_run (
     id                         bigserial PRIMARY KEY,
