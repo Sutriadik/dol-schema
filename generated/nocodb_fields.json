@@ -1,10 +1,11 @@
 {
-  "schema_version": "companion-2026.09.1",
+  "schema_version": "companion-2026.10.1",
   "tables": {
     "document": [
       {
         "title": "content_hash",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "sha1 isi berkas -- kunci idempotensi; proses ulang = UPDATE"
       },
       {
         "title": "doc_type",
@@ -17,7 +18,8 @@
       },
       {
         "title": "source_filename",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "pv": true
       },
       {
         "title": "page_count",
@@ -25,25 +27,54 @@
       },
       {
         "title": "markdown",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "markdown utuh; PM membaca tanpa membuka PDF"
+      },
+      {
+        "title": "validation_notes",
+        "uidt": "LongText",
+        "description": "[2026.10.1] peringatan tingkat dokumen untuk PM, mis. salinan ganda atau jumlah item tidak sama dengan total"
       }
     ],
     "contract": [
       {
         "title": "document_id",
-        "uidt": "Number"
+        "uidt": "Number",
+        "description": "UNIQUE -> 1:1 dengan document"
+      },
+      {
+        "title": "mybhakti_project_ref",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] proyek/deal di MyBhakti, diisi n8n -- kunci pengikat semua dokumen satu proyek; SENGAJA bukan FK (hlm. 7)"
+      },
+      {
+        "title": "contract_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "nota_pesanan",
+          "surat_pesanan",
+          "spk",
+          "kontrak_kerja_sama",
+          "pks",
+          "other"
+        ],
+        "description": "[2026.10.1] bentuk dokumen dasar: nota pesanan, surat pesanan, SPK, kontrak kerja sama, PKS"
       },
       {
         "title": "contract_number",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "nomor kontrak resmi / SPK / PKS",
+        "pv": true
       },
       {
         "title": "contract_number_internal",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "nomor registrasi internal BUT"
       },
       {
         "title": "work_title",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "judul pengadaan / lingkup pekerjaan"
       },
       {
         "title": "contract_date_text",
@@ -91,7 +122,8 @@
       },
       {
         "title": "currency",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "default IDR"
       },
       {
         "title": "payment_mechanism",
@@ -131,11 +163,13 @@
           "second_party",
           "client",
           "contractor"
-        ]
+        ],
+        "description": "first_party/client (pemberi kerja) vs second_party/contractor (pelaksana)"
       },
       {
         "title": "org_name_text",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "pv": true
       },
       {
         "title": "signer_name",
@@ -173,7 +207,8 @@
       },
       {
         "title": "description",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "pv": true
       },
       {
         "title": "specification",
@@ -193,7 +228,8 @@
       },
       {
         "title": "unit_price",
-        "uidt": "Currency"
+        "uidt": "Currency",
+        "description": "selalu diverifikasi PM (hlm. 20)"
       },
       {
         "title": "line_total",
@@ -204,14 +240,61 @@
         "uidt": "LongText"
       }
     ],
+    "contract_requirement": [
+      {
+        "title": "contract_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "line_no",
+        "uidt": "Number"
+      },
+      {
+        "title": "requirement_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "mandatory_attachment",
+          "handover_condition",
+          "partial_delivery"
+        ],
+        "description": "lampiran wajib / syarat serah terima / boleh parsial"
+      },
+      {
+        "title": "requirement_text",
+        "uidt": "LongText",
+        "description": "mis. 'Berita Acara Uji Terima'",
+        "pv": true
+      },
+      {
+        "title": "clause_ref",
+        "uidt": "SingleLineText",
+        "description": "pasal rujukan, mis. 'Pasal 9 ayat 2'"
+      },
+      {
+        "title": "evidence_quote",
+        "uidt": "LongText",
+        "description": "kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)"
+      }
+    ],
     "sph": [
       {
         "title": "document_id",
         "uidt": "Number"
       },
       {
+        "title": "mybhakti_project_ref",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] proyek yang pengadaannya ditawar; diisi n8n"
+      },
+      {
+        "title": "mybhakti_vendor_ref",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] vendor penerbit di MyBhakti; diisi n8n"
+      },
+      {
         "title": "sph_number",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "pv": true
       },
       {
         "title": "sph_date_text",
@@ -223,15 +306,18 @@
       },
       {
         "title": "project_name",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "perihal / nama pekerjaan yang ditawarkan"
       },
       {
         "title": "client_name",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "instansi yang dituju surat"
       },
       {
         "title": "vendor_name",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "penerbit SPH seperti tertulis"
       },
       {
         "title": "vendor_npwp",
@@ -243,7 +329,8 @@
       },
       {
         "title": "vat_percentage",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "apa adanya di dokumen; sering berupa frasa"
       },
       {
         "title": "vat_value",
@@ -251,11 +338,13 @@
       },
       {
         "title": "total_price",
-        "uidt": "Currency"
+        "uidt": "Currency",
+        "description": "grand total"
       },
       {
         "title": "validity_text",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "masa berlaku penawaran, mis. '30 hari'"
       },
       {
         "title": "payment_mechanism",
@@ -263,7 +352,8 @@
       },
       {
         "title": "currency",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "default IDR"
       }
     ],
     "sph_item": [
@@ -276,12 +366,18 @@
         "uidt": "Number"
       },
       {
+        "title": "contract_item_id",
+        "uidt": "Number",
+        "description": "[2026.10.1] item kontrak yang dipenuhi baris ini -- kunci price matching & tabel banding antar-vendor (Bulan 5)"
+      },
+      {
         "title": "category",
         "uidt": "SingleLineText"
       },
       {
         "title": "description",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "pv": true
       },
       {
         "title": "specification",
@@ -320,6 +416,247 @@
         "uidt": "LongText"
       }
     ],
+    "bast": [
+      {
+        "title": "document_id",
+        "uidt": "Number",
+        "description": "UNIQUE -> 1:1 dengan document"
+      },
+      {
+        "title": "direction",
+        "uidt": "SingleSelect",
+        "options": [
+          "customer",
+          "vendor",
+          "unknown"
+        ],
+        "description": "customer = kita->pelanggan (acuan: kontrak); vendor = vendor->kita (acuan: PO) -- hlm. 10"
+      },
+      {
+        "title": "contract_id",
+        "uidt": "Number",
+        "description": "hanya untuk direction=customer"
+      },
+      {
+        "title": "mybhakti_po_ref",
+        "uidt": "SingleLineText",
+        "description": "rujukan opak ke MyBhakti, diisi n8n -- SENGAJA bukan FK (hlm. 7)"
+      },
+      {
+        "title": "bast_number_customer",
+        "uidt": "SingleLineText",
+        "description": "nomor versi pelanggan",
+        "pv": true
+      },
+      {
+        "title": "bast_number_internal",
+        "uidt": "SingleLineText",
+        "description": "nomor versi BUT -- dari numbering service milik RPA (hlm. 20)"
+      },
+      {
+        "title": "handover_date_text",
+        "uidt": "SingleLineText",
+        "description": "apa adanya di dokumen"
+      },
+      {
+        "title": "handover_date",
+        "uidt": "Date",
+        "description": "hasil parse; NULL kalau gagal"
+      },
+      {
+        "title": "handover_city",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "work_title",
+        "uidt": "LongText"
+      },
+      {
+        "title": "basis_doc_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "contract",
+          "pks",
+          "spk",
+          "order_note",
+          "purchase_order",
+          "other"
+        ]
+      },
+      {
+        "title": "basis_doc_number",
+        "uidt": "SingleLineText",
+        "description": "seperti tercetak"
+      },
+      {
+        "title": "basis_doc_date_text",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "basis_doc_date",
+        "uidt": "Date"
+      },
+      {
+        "title": "basis_doc_value",
+        "uidt": "Currency"
+      },
+      {
+        "title": "basis_doc_value_vat",
+        "uidt": "SingleSelect",
+        "options": [
+          "included",
+          "excluded",
+          "unstated"
+        ]
+      },
+      {
+        "title": "currency",
+        "uidt": "SingleLineText",
+        "description": "default IDR"
+      },
+      {
+        "title": "acceptance_statement",
+        "uidt": "LongText"
+      }
+    ],
+    "bast_party": [
+      {
+        "title": "bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "role",
+        "uidt": "SingleSelect",
+        "options": [
+          "handover",
+          "receiver"
+        ],
+        "description": "peran, BUKAN 'Pihak Pertama/Kedua' -- label itu terbalik antar-format"
+      },
+      {
+        "title": "org_name_text",
+        "uidt": "SingleLineText",
+        "description": "nama seperti ditandatangani",
+        "pv": true
+      },
+      {
+        "title": "signer_name",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "signer_title",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "org_address_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "mybhakti_party_ref",
+        "uidt": "SingleLineText",
+        "description": "opak, diisi n8n"
+      }
+    ],
+    "bast_item": [
+      {
+        "title": "bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "line_no",
+        "uidt": "Number"
+      },
+      {
+        "title": "contract_item_id",
+        "uidt": "Number",
+        "description": "[2026.10.1] baris BoQ kontrak yang diserahkan -- bila terisi, uraian & harga DIBACA dari contract_item, sehingga pasti sama dengan kontrak"
+      },
+      {
+        "title": "description",
+        "uidt": "LongText",
+        "pv": true
+      },
+      {
+        "title": "quantity",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "unit",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "unit_price",
+        "uidt": "Currency"
+      },
+      {
+        "title": "line_total",
+        "uidt": "Currency"
+      },
+      {
+        "title": "test_result",
+        "uidt": "SingleLineText"
+      },
+      {
+        "title": "activation_date_text",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] 'Tanggal Aktif' apa adanya"
+      },
+      {
+        "title": "activation_date",
+        "uidt": "Date",
+        "description": "[2026.10.1] hasil parse"
+      },
+      {
+        "title": "service_order_ref",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] 'No. AO' layanan"
+      },
+      {
+        "title": "service_id",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] 'SID' layanan"
+      },
+      {
+        "title": "location",
+        "uidt": "SingleLineText",
+        "description": "[2026.10.1] lokasi pemasangan / layanan"
+      },
+      {
+        "title": "remarks",
+        "uidt": "LongText"
+      }
+    ],
+    "bast_condition": [
+      {
+        "title": "bast_id",
+        "uidt": "Number"
+      },
+      {
+        "title": "condition_type",
+        "uidt": "SingleSelect",
+        "options": [
+          "progress_percent",
+          "service_active_since",
+          "acceptance_test_ref",
+          "delivery_reconciliation_ref",
+          "supporting_document",
+          "amount_in_words"
+        ],
+        "pv": true
+      },
+      {
+        "title": "value_text",
+        "uidt": "LongText"
+      },
+      {
+        "title": "value_number",
+        "uidt": "Decimal"
+      },
+      {
+        "title": "value_date",
+        "uidt": "Date"
+      }
+    ],
     "bast_draft": [
       {
         "title": "contract_id",
@@ -331,7 +668,8 @@
       },
       {
         "title": "work_title",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "pv": true
       },
       {
         "title": "handover_date_text",
@@ -358,7 +696,8 @@
       },
       {
         "title": "template_name",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "format_telkom | format_kampus | format_instansi"
       },
       {
         "title": "acceptance_statement",
@@ -370,209 +709,106 @@
       },
       {
         "title": "generated_bast_id",
-        "uidt": "Number"
+        "uidt": "Number",
+        "description": "terisi saat status=generated; tanpa ini, kontrak yang di-generate ulang membuat PM tidak tahu draf mana menghasilkan BAST yang mana"
       },
       {
         "title": "approved_by",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "Diisi PM. HANYA diisi manusia (PM)"
       },
       {
         "title": "approved_at",
-        "uidt": "DateTime"
+        "uidt": "DateTime",
+        "description": "Diisi PM. HANYA diisi manusia (PM)"
       }
     ],
-    "bast": [
+    "evidence_photo": [
       {
-        "title": "document_id",
-        "uidt": "Number"
+        "title": "odk_instance_id",
+        "uidt": "SingleLineText",
+        "description": "ID submission ODK Central -- sinkron ulang = update, bukan baris kembar"
       },
       {
-        "title": "direction",
+        "title": "contract_item_id",
+        "uidt": "Number",
+        "description": "baris BoQ kontrak yang dibuktikan foto ini"
+      },
+      {
+        "title": "requirement_id",
+        "uidt": "Number",
+        "description": "lampiran wajib kontrak yang dipenuhi (bila ada) -- sambungan checklist gabungan"
+      },
+      {
+        "title": "component_label",
+        "uidt": "SingleLineText",
+        "description": "mis. '4 Unit Switch', '1 Unit Router'",
+        "pv": true
+      },
+      {
+        "title": "photo_type",
         "uidt": "SingleSelect",
         "options": [
-          "customer",
-          "vendor",
-          "unknown"
-        ]
+          "item",
+          "serial_label",
+          "installation",
+          "screenshot"
+        ],
+        "description": "foto barang / label serial number / pemasangan / tangkapan layar"
       },
       {
-        "title": "contract_id",
-        "uidt": "Number"
+        "title": "serial_number",
+        "uidt": "SingleLineText",
+        "description": "wajib untuk foto label SN; bahan registry aset & garansi (Bulan 6)"
       },
       {
-        "title": "mybhakti_po_ref",
+        "title": "photo_url",
         "uidt": "SingleLineText"
       },
       {
-        "title": "bast_number_customer",
-        "uidt": "SingleLineText"
+        "title": "taken_at",
+        "uidt": "DateTime",
+        "description": "waktu pengambilan foto"
       },
       {
-        "title": "bast_number_internal",
-        "uidt": "SingleLineText"
+        "title": "gps_lat",
+        "uidt": "Decimal",
+        "description": "lintang, mis. -7.347824"
       },
       {
-        "title": "handover_date_text",
-        "uidt": "SingleLineText"
+        "title": "gps_lon",
+        "uidt": "Decimal",
+        "description": "bujur, mis. 108.232318"
       },
       {
-        "title": "handover_date",
-        "uidt": "Date"
+        "title": "auto_check_notes",
+        "uidt": "LongText",
+        "description": "catatan pemeriksaan otomatis n8n, mis. 'jarak 120 m dari lokasi proyek'"
       },
       {
-        "title": "handover_city",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "work_title",
-        "uidt": "LongText"
-      },
-      {
-        "title": "basis_doc_type",
+        "title": "review_status",
         "uidt": "SingleSelect",
         "options": [
-          "contract",
-          "pks",
-          "spk",
-          "order_note",
-          "purchase_order",
-          "other"
-        ]
+          "pending",
+          "approved",
+          "rejected"
+        ],
+        "description": "Diisi PM. pending = belum dicek. HANYA PM yang mengubah"
       },
       {
-        "title": "basis_doc_number",
-        "uidt": "SingleLineText"
+        "title": "reviewed_by",
+        "uidt": "SingleLineText",
+        "description": "Diisi PM. HANYA diisi PM"
       },
       {
-        "title": "basis_doc_date_text",
-        "uidt": "SingleLineText"
+        "title": "reviewed_at",
+        "uidt": "DateTime",
+        "description": "Diisi PM. HANYA diisi PM"
       },
       {
-        "title": "basis_doc_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "basis_doc_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "basis_doc_value_vat",
-        "uidt": "SingleSelect",
-        "options": [
-          "included",
-          "excluded",
-          "unstated"
-        ]
-      },
-      {
-        "title": "currency",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "acceptance_statement",
-        "uidt": "LongText"
-      }
-    ],
-    "bast_party": [
-      {
-        "title": "bast_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "role",
-        "uidt": "SingleSelect",
-        "options": [
-          "handover",
-          "receiver"
-        ]
-      },
-      {
-        "title": "org_name_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "signer_name",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "signer_title",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "org_address_text",
-        "uidt": "LongText"
-      },
-      {
-        "title": "mybhakti_party_ref",
-        "uidt": "SingleLineText"
-      }
-    ],
-    "bast_item": [
-      {
-        "title": "bast_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "line_no",
-        "uidt": "Number"
-      },
-      {
-        "title": "description",
-        "uidt": "LongText"
-      },
-      {
-        "title": "quantity",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "unit",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "unit_price",
-        "uidt": "Currency"
-      },
-      {
-        "title": "line_total",
-        "uidt": "Currency"
-      },
-      {
-        "title": "test_result",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "remarks",
-        "uidt": "LongText"
-      }
-    ],
-    "bast_condition": [
-      {
-        "title": "bast_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "condition_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "progress_percent",
-          "service_active_since",
-          "acceptance_test_ref",
-          "delivery_reconciliation_ref",
-          "supporting_document",
-          "amount_in_words"
-        ]
-      },
-      {
-        "title": "value_text",
-        "uidt": "LongText"
-      },
-      {
-        "title": "value_number",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "value_date",
-        "uidt": "Date"
+        "title": "review_note",
+        "uidt": "LongText",
+        "description": "Diisi PM. alasan bila ditolak, mis. 'SN tidak terbaca'"
       }
     ],
     "extracted_field": [
@@ -582,7 +818,9 @@
       },
       {
         "title": "field_path",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "mis. contract.Nomor Kontrak Kerja",
+        "pv": true
       },
       {
         "title": "ai_value_text",
@@ -590,15 +828,18 @@
       },
       {
         "title": "evidence_page",
-        "uidt": "Number"
+        "uidt": "Number",
+        "description": "dihitung deterministik, BUKAN ditulis LLM"
       },
       {
         "title": "evidence_quote",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "potongan teks dokumen yang cocok"
       },
       {
         "title": "evidence_score",
-        "uidt": "Percent"
+        "uidt": "Decimal",
+        "description": "0-1: seberapa persis nilai ditemukan di teks dokumen"
       },
       {
         "title": "system_status",
@@ -610,21 +851,26 @@
           "unsupported",
           "conflict",
           "missing"
-        ]
+        ],
+        "description": "saran sistem, BUKAN persetujuan"
       }
     ],
     "field_review": [
       {
         "title": "document_id",
-        "uidt": "Number"
+        "uidt": "Number",
+        "description": "Diisi PM. RESTRICT: dokumen dengan keputusan PM tidak boleh terhapus diam-diam"
       },
       {
         "title": "field_path",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "Diisi PM.",
+        "pv": true
       },
       {
         "title": "reviewed_ai_value_text",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "Diisi PM. nilai AI yang DILIHAT PM saat memutuskan; kalau nilai AI berubah, konfirmasi lama tidak berlaku untuk nilai baru"
       },
       {
         "title": "decision",
@@ -633,23 +879,28 @@
           "confirmed",
           "corrected",
           "rejected"
-        ]
+        ],
+        "description": "Diisi PM."
       },
       {
         "title": "final_value_text",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "Diisi PM."
       },
       {
         "title": "reviewed_by",
-        "uidt": "SingleLineText"
+        "uidt": "SingleLineText",
+        "description": "Diisi PM."
       },
       {
         "title": "reviewed_at",
-        "uidt": "DateTime"
+        "uidt": "DateTime",
+        "description": "Diisi PM."
       },
       {
         "title": "reviewer_note",
-        "uidt": "LongText"
+        "uidt": "LongText",
+        "description": "Diisi PM."
       }
     ]
   }

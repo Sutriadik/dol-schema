@@ -1,0 +1,328 @@
+// =====================================================================================
+//  USULAN Skema v2 — Delivery Ops Layer (PT Bhakti Unggul Teknovasi)
+//  Status : USULAN untuk ditinjau PM & mentor. BELUM dipakai kode.
+//  Setelah disetujui, isi berkas ini dipindah ke dol_schema/model.py dan diagram resmi
+//  dibangkitkan ulang ke generated/schema.dbml.
+//
+//  Cara baca warna header:
+//    biru   = diisi otomatis oleh sistem (AI)
+//    oranye = diisi MANUSIA (PM) — sistem tidak pernah menulis ke sini
+//    hijau  = diisi sistem, disetujui PM
+//    abu    = catatan teknis, hanya di database, TIDAK tampil di NocoDB
+//
+//  Semua nominal uang dalam Rupiah (IDR) kecuali kolom mata_uang berkata lain.
+//  Skor keyakinan & skor bukti dalam PERSEN 0–100.
+// =====================================================================================
+
+Project dol_schema_v2 {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Pusat data hasil ekstraksi AI atas dokumen proyek (Kontrak/SPK/PKS, SPH, BAST).
+  Alur: dokumen masuk -> AI mengekstrak nilai + skor keyakinan -> PM memeriksa per field
+  -> data terverifikasi dipakai untuk membuat draf BAST.
+  Data klien, vendor, dan PO TIDAK disimpan di sini — sumbernya MyBhakti.
+  '''
+}
+
+// ------------------------------------------------------------------ 1. DOKUMEN (pusat)
+Table dokumen [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  jenis_dokumen jenis_dokumen [not null, note: 'kontrak / sph / bast']
+  nama_file text [not null, note: 'nama berkas PDF yang diunggah']
+  jumlah_halaman integer
+  hash_file text [not null, unique, note: 'sidik jari isi berkas (sha1). Berkas yang sama diproses ulang = baris ini diperbarui, bukan digandakan']
+  teks_dokumen text [note: 'isi dokumen hasil OCR, agar PM bisa membaca tanpa membuka PDF']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Satu baris per berkas yang masuk. Semua tabel lain menginduk ke sini.'
+}
+
+// ------------------------------------------------------------------ 2. KEPALA DOKUMEN
+Table kontrak [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null, unique, note: '1 berkas = 1 kontrak']
+  nomor_kontrak text [note: 'nomor resmi Kontrak/SPK/PKS']
+  nomor_kontrak_internal text [note: 'nomor registrasi internal BUT']
+  nama_pekerjaan text [not null]
+  tanggal_kontrak_teks text [note: 'apa adanya di dokumen']
+  tanggal_kontrak date [note: 'hasil baca sistem; kosong bila tidak yakin']
+  tanggal_mulai date
+  tanggal_selesai date
+  jangka_waktu_teks text [note: 'mis. "30 hari kalender"']
+  subtotal numeric(18,2) [note: 'sebelum PPN']
+  persen_ppn text [note: 'apa adanya, mis. "11%"']
+  nilai_ppn numeric(18,2)
+  nilai_kontrak numeric(18,2) [note: 'total termasuk PPN']
+  mata_uang char(3) [not null, default: 'IDR']
+  mekanisme_pembayaran text
+  ketentuan_denda text [note: 'mis. "1 permil per hari keterlambatan"']
+  syarat_lampiran_bast text [note: 'dokumen yang wajib dilampirkan saat BAST']
+  nama_bank text
+  nomor_rekening text
+  nama_rekening text
+
+  Note: 'Kepala Kontrak/SPK/PKS — sumber utama pembuatan draf BAST.'
+}
+
+Table sph [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null, unique]
+  nomor_sph text
+  tanggal_sph_teks text
+  tanggal_sph date
+  perihal text [note: 'nama pekerjaan yang ditawarkan']
+  masa_berlaku text [note: 'mis. "30 hari sejak tanggal surat"']
+  subtotal numeric(18,2)
+  persen_ppn text
+  nilai_ppn numeric(18,2)
+  total_harga numeric(18,2) [note: 'grand total penawaran']
+  mata_uang char(3) [not null, default: 'IDR']
+  mekanisme_pembayaran text
+
+  Note: 'Kepala Surat Penawaran Harga. Vendor & klien ada di tabel pihak.'
+}
+
+Table bast [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null, unique]
+  arah_bast arah_bast [not null, note: 'ke_pelanggan = BUT menyerahkan; dari_vendor = BUT menerima']
+  kontrak_id bigint [note: 'kontrak yang menjadi dasar BAST ini (bila ada)']
+  nomor_bast text
+  tanggal_serah_terima_teks text
+  tanggal_serah_terima date
+  nama_pekerjaan text [not null]
+  jenis_dokumen_dasar jenis_dokumen_dasar
+  nomor_dokumen_dasar text [note: 'nomor PO/Kontrak/SPK seperti tercetak']
+  nilai_pengadaan numeric(18,2)
+  ppn_nilai_pengadaan status_ppn [note: 'apakah nilai pengadaan sudah termasuk PPN']
+  mata_uang char(3) [not null, default: 'IDR']
+  pernyataan_penerimaan text
+  mybhakti_po_ref text [note: 'rujukan PO di MyBhakti, diisi n8n. Sengaja BUKAN relasi']
+
+  Note: 'Kepala Berita Acara Serah Terima.'
+}
+
+// ------------------------------------------------------------------ 3. ISI DOKUMEN
+Table pihak [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null]
+  peran peran_pihak [not null]
+  nama_organisasi text [not null]
+  nama_penandatangan text
+  jabatan text
+  alamat text
+  npwp text
+  kontak text [note: 'telepon / email (umumnya vendor SPH)']
+  mybhakti_pihak_ref text [note: 'rujukan ke MyBhakti, diisi n8n. Sengaja BUKAN relasi']
+
+  indexes {
+    (dokumen_id, peran) [unique, note: 'satu peran hanya satu kali per dokumen']
+  }
+  Note: '''
+  Semua pihak dari semua jenis dokumen dalam SATU tabel (sebelumnya 2 tabel + kolom vendor di SPH).
+  Kontrak: pihak_pertama / pihak_kedua seperti tercetak.
+  SPH: vendor / klien. BAST: penyerah / penerima — dibaca dari kalimat "menyerahkan",
+  karena label "Pihak Pertama/Kedua" pada BAST terbalik antar-format.
+  '''
+}
+
+Table rincian_item [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null]
+  no_urut integer [not null]
+  kategori text
+  uraian text [not null, note: 'nama barang / pekerjaan']
+  spesifikasi text
+  merek text [note: 'umumnya hanya di SPH']
+  part_number text [note: 'umumnya hanya di SPH']
+  volume numeric(18,2)
+  satuan text
+  periode text [note: 'mis. "12 bulan"']
+  harga_satuan numeric(18,2)
+  jumlah_harga numeric(18,2)
+  hasil_uji text [note: 'hanya di BAST']
+  keterangan text
+
+  indexes {
+    (dokumen_id, no_urut) [unique]
+  }
+  Note: '''
+  Rincian barang/pekerjaan (BoQ) dari SEMUA jenis dokumen dalam SATU tabel
+  (sebelumnya contract_item, sph_item, bast_item). Kolom yang tidak dimiliki
+  suatu jenis dokumen dibiarkan kosong. Harga selalu diverifikasi PM.
+  '''
+}
+
+// ------------------------------------------------------------------ 4. HASIL EKSTRAKSI & VERIFIKASI
+Table hasil_ekstraksi [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null]
+  nama_field text [not null, note: 'mis. "Nomor Kontrak Kerja", "Pihak Pertama.NPWP"']
+  nilai_ai text [note: 'nilai yang dibaca AI']
+  skor_keyakinan numeric(5,1) [note: 'CONFIDENCE 0–100: 60% kecocokan dengan teks dokumen + 15% kualitas hasil scan + 25% lolos aturan bisnis']
+  skor_bukti numeric(5,1) [note: '0–100: seberapa persis nilai ditemukan di teks dokumen']
+  status_sistem status_sistem [not null]
+  halaman_bukti integer [note: 'halaman tempat nilai ditemukan']
+  kutipan_bukti text [note: 'potongan teks dokumen yang menjadi bukti']
+  catatan_sistem text [note: 'alasan status, mis. "total tidak sama dengan subtotal + PPN"']
+
+  indexes {
+    (dokumen_id, nama_field) [unique]
+  }
+  Note: '''
+  SATU BARIS PER FIELD: inilah "nilai ekstraksi + confidence score" yang diperiksa PM.
+  Diisi sistem saja. Status sistem BUKAN persetujuan — persetujuan ada di review_pm.
+  '''
+}
+
+Table review_pm [headercolor: #E67E22] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null]
+  nama_field text [not null]
+  keputusan keputusan_review [not null]
+  nilai_final text [note: 'diisi bila keputusan = dikoreksi']
+  nilai_ai_saat_review text [note: 'nilai AI yang dilihat PM saat memutuskan. Bila AI berubah, keputusan ini perlu ditinjau ulang']
+  direview_oleh text [not null]
+  direview_pada timestamptz [not null]
+  catatan text
+
+  indexes {
+    (dokumen_id, nama_field) [unique]
+  }
+  Note: '''
+  Keputusan PM per field. HANYA diisi manusia — sistem tidak pernah menulis ke sini,
+  sehingga memproses ulang dokumen tidak mungkin menimpa keputusan PM.
+  '''
+}
+
+// ------------------------------------------------------------------ 5. HASIL KERJA
+Table draf_bast [headercolor: #27AE60] {
+  id bigint [pk, increment]
+  kontrak_id bigint [not null]
+  status status_draf [not null]
+  nomor_draf text
+  nama_pekerjaan text [not null]
+  tanggal_serah_terima date
+  kota_serah_terima text
+  template text [note: 'format_telkom / format_kampus / format_instansi']
+  pernyataan_penerimaan text
+  url_dokumen text [note: 'tautan berkas BAST hasil generate']
+  bast_hasil_id bigint [note: 'BAST yang dihasilkan dari draf ini']
+  disetujui_oleh text [note: 'HANYA diisi PM']
+  disetujui_pada timestamptz [note: 'HANYA diisi PM']
+
+  Note: 'Draf BAST yang disusun otomatis dari kontrak terverifikasi. Rincian item diambil dari rincian_item kontrak — tidak disalin.'
+}
+
+Table riwayat_proses [headercolor: #95A5A6] {
+  id bigint [pk, increment]
+  dokumen_id bigint [not null]
+  mesin_ocr text
+  model_ai text
+  versi_prompt text
+  versi_skema text
+  jumlah_panggilan_ai integer
+  durasi_parsing_detik numeric(8,2)
+  durasi_ekstraksi_detik numeric(8,2)
+  status_validasi text
+  diproses_pada timestamptz
+
+  Note: 'Catatan teknis tiap pemrosesan untuk bukti "terukur". Hanya di database, TIDAK tampil di NocoDB.'
+}
+
+// ------------------------------------------------------------------ relasi
+Ref: kontrak.dokumen_id - dokumen.id [delete: cascade]
+Ref: sph.dokumen_id - dokumen.id [delete: cascade]
+Ref: bast.dokumen_id - dokumen.id [delete: cascade]
+Ref: bast.kontrak_id > kontrak.id [delete: restrict]
+Ref: pihak.dokumen_id > dokumen.id [delete: cascade]
+Ref: rincian_item.dokumen_id > dokumen.id [delete: cascade]
+Ref: hasil_ekstraksi.dokumen_id > dokumen.id [delete: cascade]
+Ref: review_pm.dokumen_id > dokumen.id [delete: restrict]
+Ref: draf_bast.kontrak_id > kontrak.id [delete: cascade]
+Ref: draf_bast.bast_hasil_id > bast.id [delete: restrict]
+Ref: riwayat_proses.dokumen_id > dokumen.id [delete: cascade]
+
+// ------------------------------------------------------------------ pilihan nilai
+Enum jenis_dokumen {
+  kontrak
+  sph
+  bast
+}
+
+Enum arah_bast {
+  ke_pelanggan [note: 'BUT menyerahkan ke pelanggan']
+  dari_vendor [note: 'vendor menyerahkan ke BUT']
+  belum_diketahui
+}
+
+Enum jenis_dokumen_dasar {
+  kontrak
+  pks
+  spk
+  nota_pesanan
+  purchase_order
+  lainnya
+}
+
+Enum status_ppn {
+  termasuk_ppn
+  belum_termasuk_ppn
+  tidak_disebut
+}
+
+Enum peran_pihak {
+  pihak_pertama [note: 'kontrak, seperti tercetak']
+  pihak_kedua [note: 'kontrak, seperti tercetak']
+  vendor [note: 'SPH: penerbit penawaran']
+  klien [note: 'SPH: tujuan surat']
+  penyerah [note: 'BAST: yang menyerahkan']
+  penerima [note: 'BAST: yang menerima']
+}
+
+Enum status_sistem {
+  terverifikasi_otomatis [note: 'ditemukan persis di dokumen + lolos semua aturan']
+  diterima_otomatis [note: 'bukti kuat tapi tidak persis']
+  perlu_review [note: 'bukti lemah atau ada peringatan aturan']
+  tidak_ditemukan [note: 'nilai tidak ada di dokumen']
+  konflik [note: 'melanggar aturan, mis. total != subtotal + PPN']
+  kosong [note: 'AI tidak mengisi field ini']
+}
+
+Enum keputusan_review {
+  dikonfirmasi
+  dikoreksi
+  ditolak
+}
+
+Enum status_draf {
+  draf
+  menunggu_review
+  disetujui
+  sudah_dibuat
+  ditolak
+}
+
+// ------------------------------------------------------------------ kelompok
+TableGroup dokumen_masuk {
+  dokumen
+  kontrak
+  sph
+  bast
+}
+
+TableGroup isi_dokumen {
+  pihak
+  rincian_item
+}
+
+TableGroup verifikasi_pm {
+  hasil_ekstraksi
+  review_pm
+}
+
+TableGroup keluaran {
+  draf_bast
+  riwayat_proses
+}

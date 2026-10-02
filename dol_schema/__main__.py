@@ -15,6 +15,8 @@ from dol_schema import (
     SCHEMA_VERSION,
     generate_ddl,
     to_json,
+    to_dbml,
+    to_kamus,
     to_nocodb_fields,
     to_schema_dict,
 )
@@ -28,6 +30,8 @@ def _artifacts() -> dict[Path, str]:
         OUT / "schema.sql": generate_ddl(),
         OUT / "schema.json": to_json(to_schema_dict()),
         OUT / "nocodb_fields.json": to_json(to_nocodb_fields()),
+        OUT / "schema.dbml": to_dbml(),
+        OUT / "KAMUS_DATA.md": to_kamus(),
     }
 
 

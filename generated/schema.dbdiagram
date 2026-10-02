@@ -1,0 +1,326 @@
+{
+  "version": "3.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "relationshipMode": "All",
+    "tablePositions": [
+      {
+        "name": "document",
+        "schemaName": "public",
+        "x": 1229.74951171875,
+        "y": 52
+      },
+      {
+        "name": "contract",
+        "schemaName": "public",
+        "x": 12,
+        "y": 12
+      },
+      {
+        "name": "contract_party",
+        "schemaName": "public",
+        "x": 557.95703125,
+        "y": 53
+      },
+      {
+        "name": "contract_item",
+        "schemaName": "public",
+        "x": 557.95703125,
+        "y": 483
+      },
+      {
+        "name": "sph",
+        "schemaName": "public",
+        "x": 12,
+        "y": 890
+      },
+      {
+        "name": "sph_item",
+        "schemaName": "public",
+        "x": 557.95703125,
+        "y": 1781
+      },
+      {
+        "name": "bast_draft",
+        "schemaName": "public",
+        "x": 1229.74951171875,
+        "y": 386
+      },
+      {
+        "name": "extraction_run",
+        "schemaName": "public",
+        "x": 1909.71337890625,
+        "y": 12
+      },
+      {
+        "name": "bast",
+        "schemaName": "public",
+        "x": 557.95703125,
+        "y": 1031
+      },
+      {
+        "name": "bast_party",
+        "schemaName": "public",
+        "x": 1229.74951171875,
+        "y": 976
+      },
+      {
+        "name": "bast_item",
+        "schemaName": "public",
+        "x": 1229.74951171875,
+        "y": 1374
+      },
+      {
+        "name": "bast_condition",
+        "schemaName": "public",
+        "x": 1229.74951171875,
+        "y": 1836
+      },
+      {
+        "name": "extracted_field",
+        "schemaName": "public",
+        "x": 1909.71337890625,
+        "y": 506
+      },
+      {
+        "name": "field_review",
+        "schemaName": "public",
+        "x": 1909.71337890625,
+        "y": 904
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": [
+      {
+        "firstFieldNames": [
+          "document_id"
+        ],
+        "firstTableName": "contract",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "document",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "contract_id"
+        ],
+        "firstTableName": "contract_party",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "contract",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "contract_id"
+        ],
+        "firstTableName": "contract_item",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "contract",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "document_id"
+        ],
+        "firstTableName": "sph",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "document",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "sph_id"
+        ],
+        "firstTableName": "sph_item",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "sph",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "contract_id"
+        ],
+        "firstTableName": "bast_draft",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "contract",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "generated_bast_id"
+        ],
+        "firstTableName": "bast_draft",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "bast",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "document_id"
+        ],
+        "firstTableName": "extraction_run",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "document",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "document_id"
+        ],
+        "firstTableName": "bast",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "document",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "contract_id"
+        ],
+        "firstTableName": "bast",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "contract",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "bast_id"
+        ],
+        "firstTableName": "bast_party",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "bast",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "bast_id"
+        ],
+        "firstTableName": "bast_item",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "bast",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "bast_id"
+        ],
+        "firstTableName": "bast_condition",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "bast",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "document_id"
+        ],
+        "firstTableName": "extracted_field",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "document",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "document_id"
+        ],
+        "firstTableName": "field_review",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "document",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      }
+    ]
+  },
+  "views": {}
+}

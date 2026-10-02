@@ -1,5 +1,5 @@
 """
-Open ADE — Pembangkit DDL PostgreSQL dari app/companion/model.py.
+Pembangkit DDL PostgreSQL dari dol_schema/model.py.
 
 Kenapa DDL di PostgreSQL, bukan membuat tabel lewat UI NocoDB: belum terkonfirmasi bahwa
 relasi di UI NocoDB menjadi foreign key sungguhan, dan belum terkonfirmasi adanya constraint
@@ -11,12 +11,13 @@ from __future__ import annotations
 
 from typing import List
 
-from dol_schema.model import ALL_TABLES, SCHEMA_VERSION, Table, insert_order
+from dol_schema.model import ALL_TABLES, OWNERS, SCHEMA_VERSION, Table, insert_order
 
 _PG_TYPE = {
     "text": "text",
     "int": "integer",
     "numeric": "numeric(18,2)",
+    "coord": "numeric(9,6)",      # GPS: 6 desimal ~ 11 cm; numeric(18,2) akan memotongnya
     "date": "date",
     "timestamptz": "timestamptz",
     "char3": "char(3)",
@@ -38,8 +39,8 @@ def _column_sql(t: Table, c) -> str:
     else:
         if not c.null:
             parts.append("NOT NULL")
-        if c.name == "currency":
-            parts.append("DEFAULT 'IDR'")
+        if c.default:
+            parts.append(f"DEFAULT {c.default}")
     if c.unique:
         parts.append("UNIQUE")
     if c.fk:
@@ -54,7 +55,10 @@ def _table_sql(t: Table) -> str:
         for ln in t.note.split(". "):
             if ln.strip():
                 lines.append(f"-- {ln.strip().rstrip('.')}.")
-    lines.append(f"-- Ditulis oleh: {'MANUSIA (PM)' if t.written_by == 'human' else 'mesin (pipeline)'}")
+    lines.append(f"-- Ditulis oleh: {'MANUSIA (PM)' if t.written_by == 'human' else 'mesin (pipeline)'}"
+                 f" · pemilik: {OWNERS[t.owner]}")
+    if t.human_columns() and t.written_by != "human":
+        lines.append(f"-- Kolom yang HANYA diisi PM: {', '.join(t.human_columns())}")
     lines.append(f"CREATE TABLE IF NOT EXISTS {t.name} (")
 
     body = ["    id                         bigserial PRIMARY KEY"]
@@ -113,7 +117,48 @@ SELECT fr.document_id, fr.field_path,
 FROM field_review fr
 JOIN extracted_field ef
   ON ef.document_id = fr.document_id AND ef.field_path = fr.field_path
-WHERE ef.ai_value_text IS DISTINCT FROM fr.reviewed_ai_value_text;"""
+WHERE ef.ai_value_text IS DISTINCT FROM fr.reviewed_ai_value_text;
+
+-- ---------------------------------------------------------------- penyusunan BAST
+-- Tiga "resep" siap pakai untuk render BAST (RPA) dan compiler lampiran (Network).
+-- Semuanya dibaca dari kontrak lewat relasi -- tidak ada data yang disalin.
+
+-- Rincian BAST: uraian, spesifikasi, jumlah, harga DARI KONTRAK bila baris BAST menunjuk
+-- contract_item; informasi serah terima (tanggal aktif, AO/SID, lokasi) dari bast_item.
+CREATE OR REPLACE VIEW bast_rincian AS
+SELECT bi.bast_id, b.contract_id, bi.line_no,
+       COALESCE(ci.description, bi.description) AS description,
+       ci.specification,
+       COALESCE(ci.quantity, bi.quantity)       AS quantity,
+       COALESCE(ci.unit, bi.unit)               AS unit,
+       COALESCE(ci.unit_price, bi.unit_price)   AS unit_price,
+       COALESCE(ci.line_total, bi.line_total)   AS line_total,
+       bi.activation_date, bi.service_order_ref, bi.service_id, bi.location, bi.test_result
+FROM bast_item bi
+JOIN bast b                ON b.id = bi.bast_id
+LEFT JOIN contract_item ci ON ci.id = bi.contract_item_id;
+
+-- Lampiran evidence: HANYA foto yang sudah disetujui PM, dikelompokkan per baris BoQ.
+CREATE OR REPLACE VIEW evidence_siap_lampiran AS
+SELECT ci.contract_id, ci.line_no, ci.description AS item_description,
+       ep.component_label, ep.photo_type, ep.serial_number,
+       ep.photo_url, ep.taken_at, ep.gps_lat, ep.gps_lon
+FROM evidence_photo ep
+JOIN contract_item ci ON ci.id = ep.contract_item_id
+WHERE ep.review_status = 'approved';
+
+-- Checklist gabungan (hlm. 15): tiap lampiran wajib kontrak + status buktinya.
+-- BAST pelanggan baru aman diajukan bila semua baris berstatus 'terpenuhi'.
+CREATE OR REPLACE VIEW checklist_gabungan AS
+SELECT cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref,
+       count(ep.id) FILTER (WHERE ep.review_status = 'approved') AS bukti_disetujui,
+       count(ep.id) FILTER (WHERE ep.review_status = 'pending')  AS bukti_menunggu,
+       CASE WHEN count(ep.id) FILTER (WHERE ep.review_status = 'approved') > 0
+            THEN 'terpenuhi' ELSE 'belum' END                     AS status
+FROM contract_requirement cr
+LEFT JOIN evidence_photo ep ON ep.requirement_id = cr.id
+WHERE cr.requirement_type = 'mandatory_attachment'
+GROUP BY cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref;"""
 
 
 def generate_ddl() -> str:
@@ -121,7 +166,7 @@ def generate_ddl() -> str:
     tables = sorted(ALL_TABLES, key=lambda t: order.index(t.name))
     out = [
         "-- Open ADE — Companion data model untuk NocoDB",
-        f"-- Dibangkitkan dari app/companion/model.py (versi {SCHEMA_VERSION}).",
+        f"-- Dibangkitkan dari dol_schema/model.py (versi {SCHEMA_VERSION}).",
         "-- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.",
         "",
         _UPDATED_AT_FN,

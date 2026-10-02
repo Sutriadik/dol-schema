@@ -48,6 +48,11 @@ Alur data:
 
 ## 2. Diagram ERD
 
+> **Diagram yang berlaku ada di `generated/schema.dbml`** — dibangkitkan dari `model.py`,
+> lengkap dengan tipe kolom, UNIQUE, aksi ON DELETE, dan pilihan nilai. Buka di
+> dbdiagram.io (lihat README). Diagram Mermaid di bawah adalah ringkasan konseptual
+> tulisan tangan; bila keduanya berbeda, yang benar adalah `schema.dbml`.
+
 ```mermaid
 erDiagram
     DOCUMENT ||--o| CONTRACT : "berkas kontrak/SPK/PKS"

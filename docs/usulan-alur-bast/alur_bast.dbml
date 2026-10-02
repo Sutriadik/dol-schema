@@ -1,0 +1,231 @@
+// =====================================================================================
+//  USULAN — Alur data Kontrak Pelanggan -> (SPH vendor) -> BAST Pelanggan + Evidence
+//  Status : bahan workshop skema companion BERTIGA (briefing hlm. 12 & 22). BELUM dipakai kode.
+//  Dasar  : skema v1 (dol_schema/model.py) + Briefing Magang Delivery Ops Layer.
+//           Tabel & kolom BARU diberi tanda [BARU]; kolom v1 lain disingkat.
+//
+//  Warna header = PEMILIK (briefing hlm. 12):
+//    biru   = AI Engineer    (hasil ekstraksi kontrak & SPH)
+//    ungu   = Network Engineer (evidence ODK, checklist, compiler lampiran)
+//    hijau  = BAST (data dari ketiganya; nomor & render oleh RPA)
+//    oranye = keputusan PM
+// =====================================================================================
+
+Project alur_bast {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Dua rantai (briefing hlm. 3):
+    Kontrak/SPK Pelanggan = sumber semua BoQ.
+    HULU  ke vendor   : SPPH -> SPH -> BA Nego -> PO -> BAST Vendor
+    HILIR ke pelanggan: Pemasangan & Uji -> BAST Pelanggan -> Invoice   <- prioritas
+  Milik MyBhakti, hanya dibaca (hlm. 7): klien, vendor, proyek/deal, PO. Di sini hanya
+  ada kolom rujukan mybhakti_*_ref — tidak ada tabel tandingan.
+  '''
+}
+
+// ------------------------------------------------------------------ kontrak pelanggan (sumber)
+Table document [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  content_hash text [unique, not null, note: 'sidik jari berkas: unggah ulang = update, bukan dobel']
+  doc_type text [not null, note: 'contract / sph / bast']
+  source_filename text [not null]
+  Note: 'Satu baris per PDF yang masuk. (v1, disingkat)'
+}
+
+Table contract [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  document_id bigint [unique, not null]
+  mybhakti_project_ref text [note: '[BARU] proyek/deal di MyBhakti — kunci pengikat semua dokumen satu proyek']
+  contract_type contract_type [note: '[BARU] nota pesanan / surat pesanan / SPK / kontrak / PKS']
+  contract_number text [note: 'titik masuk: PM mengetik ini saat menyusun BAST']
+  contract_date date
+  work_title text [not null]
+  contract_value numeric(18,2)
+  vat_mode text [note: 'termasuk / belum termasuk PPN']
+  payment_mechanism text [note: 'mis. "Termin 12 kali"']
+  Note: '''
+  Kontrak/SPK Pelanggan dalam bentuk apa pun — "dibaca sekali, dipakai sepanjang proyek"
+  (hlm. 11). Nilai-nilainya baru boleh dipakai setelah PM mengunci per field (hlm. 20).
+  '''
+}
+
+Table contract_party [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  contract_id bigint [not null]
+  role text [not null, note: 'first_party / second_party']
+  org_name_text text [not null, note: 'SEPERTI TERTULIS di dokumen']
+  signer_name text [not null]
+  signer_title text [note: 'jabatan SAAT dokumen ditandatangani']
+  mybhakti_party_ref text [note: 'rujukan data master klien/vendor di MyBhakti']
+
+  indexes {
+    (contract_id, role) [unique]
+  }
+  Note: '''
+  CUPLIKAN penandatangan kontrak ini, bukan data master. Satu orang muncul di banyak baris
+  karena menandatangani banyak dokumen — tiap baris fakta berbeda, bukan data ganda.
+  Data master perusahaan/orang tetap di MyBhakti (hlm. 7).
+  '''
+}
+
+Table contract_item [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  contract_id bigint [not null]
+  line_no integer [not null]
+  description text [not null]
+  specification text
+  quantity numeric(18,2)
+  unit text
+  unit_price numeric(18,2) [note: 'selalu diverifikasi PM (hlm. 20)']
+  line_total numeric(18,2)
+
+  indexes {
+    (contract_id, line_no) [unique]
+  }
+  Note: '"Contract items — kewajiban ke pelanggan" (hlm. 7). SUMBER TUNGGAL BoQ: SPH vendor, BAST, dan evidence menunjuk ke sini, tidak menyalin.'
+}
+
+Table contract_requirement [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  contract_id bigint [not null]
+  requirement_type requirement_type [not null]
+  requirement_text text [not null, note: 'mis. "Berita Acara Uji Terima", "boleh diserahkan bertahap"']
+  clause_ref text [note: 'pasal rujukan, mis. "Pasal 9 ayat 2"']
+  evidence_quote text [note: 'kutipan pendek agar PM tak perlu membaca ulang kontrak (hlm. 11)']
+
+  Note: '''
+  [BARU] "Yang diambil bukan cuma angka tapi juga aturan: boleh parsial atau tidak,
+  lampiran apa yang wajib" (hlm. 11). Baris lampiran_wajib menjadi separuh dari
+  CHECKLIST GABUNGAN; separuh lainnya evidence teknis milik Network Engineer (hlm. 15).
+  '''
+}
+
+// ------------------------------------------------------------------ hulu: penawaran vendor
+Table sph [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  document_id bigint [unique, not null]
+  mybhakti_project_ref text [note: '[BARU] proyek yang pengadaannya ditawar']
+  mybhakti_vendor_ref text [note: '[BARU] vendor penerbit di MyBhakti']
+  sph_number text
+  vendor_name text [note: 'seperti tertulis']
+  total_price numeric(18,2)
+  Note: 'SPH VENDOR (hulu) — lahir DARI kebutuhan kontrak, bukan dasar kontrak. (v1 + kolom baru)'
+}
+
+Table sph_item [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  sph_id bigint [not null]
+  line_no integer [not null]
+  description text [not null]
+  unit_price numeric(18,2)
+  line_total numeric(18,2)
+  contract_item_id bigint [note: '[BARU] item kontrak yang dipenuhi baris penawaran ini — kunci PRICE MATCHING & tabel banding (Bulan 5)']
+
+  indexes {
+    (sph_id, line_no) [unique]
+  }
+  Note: 'Baris penawaran vendor. Beberapa vendor menawar item kontrak yang sama -> dibandingkan lewat contract_item_id.'
+}
+
+// ------------------------------------------------------------------ hilir: BAST Pelanggan
+Table bast [headercolor: #27AE60] {
+  id bigint [pk, increment]
+  contract_id bigint [note: 'acuan kebenaran BAST Pelanggan = kontrak (hlm. 10)']
+  direction text [not null, note: 'customer (prioritas) / vendor — acuan, lampiran, penomoran berbeda']
+  bast_number_internal text [note: 'dari NUMBERING SERVICE milik RPA (sequence database, hlm. 20)']
+  bast_number_customer text [note: 'sering diatur kontrak/pelanggan (hlm. 10)']
+  handover_date date
+  Note: 'BAST. Pihak & nilai tidak disalin — diambil lewat contract_id. Render dokumen oleh RPA (dol-render).'
+}
+
+Table bast_item [headercolor: #27AE60] {
+  id bigint [pk, increment]
+  bast_id bigint [not null]
+  contract_item_id bigint [not null, note: '[BARU] menunjuk BoQ kontrak — uraian, qty, harga PASTI sama']
+  activation_date date [note: '[BARU] "Tanggal Aktif" — tidak ada di kontrak']
+  service_order_ref text [note: '[BARU] "No. AO"']
+  service_id text [note: '[BARU] "SID"']
+  location text [note: '[BARU] lokasi layanan/pemasangan']
+
+  indexes {
+    (bast_id, contract_item_id) [unique]
+  }
+  Note: 'Hanya yang BARU di tahap serah terima. Uraian & harga dibaca dari contract_item, tidak disalin.'
+}
+
+// ------------------------------------------------------------------ evidence (wilayah Network Engineer)
+Table evidence_photo [headercolor: #8E44AD] {
+  id bigint [pk, increment]
+  odk_instance_id text [unique, not null, note: 'ID submission ODK Central: sinkron ulang = update']
+  contract_item_id bigint [not null, note: 'baris BoQ yang dibuktikan']
+  requirement_id bigint [note: 'lampiran wajib kontrak yang dipenuhi (bila ada) — sambungan checklist gabungan']
+  photo_type text [note: 'barang / label SN / pemasangan / tangkapan layar']
+  serial_number text [note: 'juga bahan registry aset & garansi (Bulan 6)']
+  photo_url text [not null]
+  taken_at timestamptz [not null]
+  gps_lat numeric(9,6)
+  gps_lon numeric(9,6)
+  review_status text [not null, default: 'belum_dicek', note: 'belum_dicek / disetujui / ditolak — HANYA PM']
+  reviewed_by text [note: 'HANYA PM']
+  review_note text [note: 'alasan bila ditolak']
+
+  Note: '''
+  USULAN untuk DIBAHAS dengan Network Engineer — tabel ini wilayah mereka (dol-odk,
+  dol-bast-compiler; hlm. 15), bukan keputusan AI Engineer sendiri.
+  Yang perlu disepakati bertiga hanyalah SAMBUNGANNYA: contract_item_id dan requirement_id.
+  Briefing Bulan 4: pisahkan unggahan teknisi (ODK) dari keputusan PM (NocoDB).
+  '''
+}
+
+// ------------------------------------------------------------------ relasi
+Ref: contract.document_id - document.id
+Ref: sph.document_id - document.id
+Ref: contract_party.contract_id > contract.id [delete: cascade]
+Ref: contract_item.contract_id > contract.id [delete: cascade]
+Ref: contract_requirement.contract_id > contract.id [delete: cascade]
+Ref: sph_item.sph_id > sph.id [delete: cascade]
+Ref: sph_item.contract_item_id > contract_item.id [delete: restrict]
+Ref: bast.contract_id > contract.id [delete: restrict]
+Ref: bast_item.bast_id > bast.id [delete: cascade]
+Ref: bast_item.contract_item_id > contract_item.id [delete: restrict]
+Ref: evidence_photo.contract_item_id > contract_item.id [delete: restrict]
+Ref: evidence_photo.requirement_id > contract_requirement.id [delete: restrict]
+
+// ------------------------------------------------------------------ pilihan nilai
+Enum contract_type {
+  nota_pesanan
+  surat_pesanan
+  spk
+  kontrak_kerja_sama
+  pks
+  lainnya
+}
+
+Enum requirement_type {
+  lampiran_wajib [note: 'dokumen/bukti yang wajib dilampirkan pada BAST']
+  syarat_serah_terima [note: 'mis. uji terima harus lulus dulu']
+  boleh_parsial [note: 'apakah serah terima boleh bertahap']
+}
+
+// ------------------------------------------------------------------ kelompok
+TableGroup kontrak_pelanggan {
+  document
+  contract
+  contract_party
+  contract_item
+  contract_requirement
+}
+
+TableGroup hulu_vendor {
+  sph
+  sph_item
+}
+
+TableGroup hilir_bast {
+  bast
+  bast_item
+}
+
+TableGroup evidence_network_engineer {
+  evidence_photo
+}

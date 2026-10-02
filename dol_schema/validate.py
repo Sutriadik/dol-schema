@@ -1,5 +1,5 @@
 """
-Open ADE — Validasi payload companion terhadap definisi model.
+Validasi payload companion terhadap definisi model.
 
 Dijalankan SEBELUM payload menyentuh NocoDB. Pada exporter lama, kolom bertipe salah membuat
 baris gagal masuk tanpa pesan yang jelas -- yang hilang justru baris yang paling perlu
@@ -23,7 +23,7 @@ def _type_ok(col: Column, value: Any) -> bool:
         return isinstance(value, str)
     if col.type == "int":
         return isinstance(value, int) and not isinstance(value, bool)
-    if col.type == "numeric":
+    if col.type in ("numeric", "coord"):
         return isinstance(value, _NUMERIC_OK) and not isinstance(value, bool)
     if col.type == "date":
         return isinstance(value, str) and bool(_ISO_DATE.match(value))
@@ -50,6 +50,7 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
                 f"({len(rows)} baris). Hanya PM yang boleh menulis ke sini."
             )
         col_names = {c.name for c in t.columns}
+        human_cols = set(t.human_columns()) if t.written_by != "human" else set()
         seen_unique: Dict[tuple, set] = {}
 
         for i, row in enumerate(rows, 1):
@@ -60,6 +61,14 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
                     problems.append(f"{table_name}[{i}].{key}: kolom tidak ada di model")
                     continue
                 col = t.column(key)
+                if key in human_cols:
+                    # Sengaja ditolak walau nilainya None: menyertakan kolom ini saja sudah
+                    # berarti PATCH bisa menimpa keputusan PM saat sinkron ulang.
+                    problems.append(
+                        f"{table_name}[{i}].{key}: kolom milik PM, pengirim mesin tidak boleh "
+                        f"menyertakannya"
+                    )
+                    continue
                 if not _type_ok(col, value):
                     problems.append(
                         f"{table_name}[{i}].{key}: tipe {col.type} tapi nilainya "
@@ -71,8 +80,10 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
                         f"({'|'.join(col.enum)})"
                     )
             for col in t.columns:
-                if col.null or col.name in ("created_at", "updated_at"):
+                if col.null or col.name in ("created_at", "updated_at") or col.name in human_cols:
                     continue
+                if col.default and col.name not in row:
+                    continue          # database mengisi nilai bawaan
                 if col.fk and f"_{col.fk.split('.')[0]}_ref" in row:
                     continue          # FK akan diisi saat insert, rujukannya ada
                 if row.get(col.name) is None:
