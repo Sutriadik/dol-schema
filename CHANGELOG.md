@@ -38,6 +38,62 @@ Langkah setiap perubahan skema:
 
 Belum ada perubahan.
 
+## [companion-2026.10.2] — 2026-10-02
+
+Fokus: hanya yang sudah pasti yang berlaku; semua yang terlihat orang kantor berbahasa
+Indonesia. **Wajib membuat base NocoDB baru** (judul kolom dan pilihan nilai berubah).
+
+### Diubah — dampak: **perlu migrasi data** (base NocoDB baru)
+- **Judul tabel & kolom di NocoDB kini bahasa Indonesia** (`Table.label`, `Column.label`),
+  mis. `contract.contract_number` tampil sebagai *Kontrak → Nomor Kontrak*. Nama teknis
+  tidak berubah. API rekaman NocoDB memakai **judul** sebagai kunci, jadi setiap pengirim
+  menerjemahkan lewat `to_nocodb_record()` / `columns[].label` di schema.json.
+- **Pilihan nilai yang tampil di sel NocoDB kini bahasa Indonesia:**
+  `doc_type` (`kontrak`/`sph`/`bast`), `contract_type` (`other` → `lainnya`),
+  `contract_party.role` (`pemberi_kerja`/`pelaksana`), `requirement_type`
+  (`lampiran_wajib`/`syarat_serah_terima`/`boleh_parsial`), `field_review.decision`
+  (`benar`/`dikoreksi`/`ditolak`), dan `extracted_field.system_status`
+  (`bukti_kuat`, `bukti_cukup`, `perlu_dicek`, `tidak_ada_di_dokumen`, `bertentangan`,
+  `kosong`). `auto_verified` diganti karena terbaca "sudah diverifikasi", padahal sistem
+  hanya memeriksa keberadaan nilai di dokumen.
+- `document.content_hash` = **sha256** isi berkas (dol-parser dulu mengirim sha1 di sini
+  sementara `document_id` ke n8n sha256 -- keduanya tidak pernah cocok).
+- **Ditunda (status `ditunda`, tidak dibuat di NocoDB):** `bast`, `bast_party`, `bast_item`,
+  `bast_condition`, `bast_draft`, `evidence_photo`. Menunggu kesepakatan dengan RPA dan
+  Network Engineer. DDL-nya pindah ke `generated/schema_usulan.sql` bersama view
+  `bast_rincian`, `evidence_siap_lampiran`, `checklist_gabungan`.
+- **Dihapus:** `sph_item.contract_item_id`. Menghubungkan baris SPH langsung ke baris kontrak
+  mengandaikan satu barang jual = satu barang beli; briefing hlm. 7 memisahkan contract item
+  dan procurement item. Dirancang ulang bersama tabel banding (Bulan 5). Belum pernah diisi.
+- `nocodb_fields.json` berbentuk `{tabel: {title, description, columns: [{column_name,
+  title, uidt, ...}]}}`; `schema.json` memuat `label` & `status`, dan `insert_order` hanya
+  berisi tabel yang berlaku.
+
+### Ditambahkan — dampak: **aman**
+- View `nilai_terverifikasi`: satu-satunya sumber nilai untuk dokumen hilir (BAST) --
+  hanya field yang diputuskan PM `benar`/`dikoreksi` dan belum basi.
+- `contract.location_text` (sudah diekstrak sebagai "Lokasi", dulu tidak tersimpan),
+  `contract_party.party_label_text` (sebutan "PIHAK PERTAMA" apa adanya; peran disimpan
+  terpisah), `contract_requirement.evidence_page`.
+- `COMMENT ON TABLE/COLUMN` di DDL berisi label Indonesia + keterangan.
+- Konvensi baru di schema.json: `status_tabel`, `judul_nocodb`, `dokumen_sudah_direview`,
+  `nilai_terverifikasi`.
+- `docs/WORKSHOP_SKEMA.md` (keputusan yang masih terbuka) dan
+  `docs/usulan-alur-bast/TEMUAN_14_BAST.md` (temuan 14 BAST asli), dipindah dari dol-parser.
+- Tes invarian: label wajib & aman untuk API NocoDB, tabel berlaku tidak bergantung pada
+  usulan, tabel berlaku yang ditulis mesin wajib punya kunci anti-dobel (18 tes).
+
+### Dilonggarkan — dampak: **aman**
+- `contract.work_title`, `contract_party.signer_name` (dan pada tabel usulan:
+  `bast.work_title`, `bast_party.signer_name`) boleh kosong. Kolom wajib untuk nilai yang
+  bisa tidak terbaca mendorong pengirim mengarang pengisi ("(tidak terbaca)", nama berkas
+  sebagai judul pekerjaan).
+
+### Diperbaiki
+- `document_review_status` tidak lagi menghitung keputusan PM yang basi sebagai
+  terverifikasi; ada kolom `stale_count`. Diuji di PostgreSQL 18.
+- `bast_rincian` (usulan) memakai volume BAST lebih dulu: serah terima parsial.
+
 ## [companion-2026.10.1] — 2026-10-01
 
 Merapikan skema untuk tiga tim dan PM: kontrak data eksplisit untuk n8n, tabel evidence untuk
@@ -76,6 +132,9 @@ schema.json sebelum/sesudah: nol kolom hilang atau berubah tipe.
 ### Diperbaiki
 - dol-parser mengirim `bast_draft.approved_by = None` — memproses ulang kontrak akan
   **menghapus persetujuan PM** saat PATCH. Ditemukan oleh aturan kolom-milik-PM yang baru.
+  **Koreksi (2026.10.2):** perbaikan ini tidak lengkap. `bast_draft` tidak punya kunci
+  anti-dobel, sehingga pengirim memakai strategi hapus-lalu-isi-ulang dan persetujuan PM
+  tetap hilang. Tabelnya kini ditunda; kuncinya wajib diputuskan sebelum berlaku.
 
 ### Dokumentasi & diagram (29 Sep 2026)
 - `generated/schema.dbml`: diagram skema untuk dbdiagram.io / ekstensi dbdiagram di VS Code

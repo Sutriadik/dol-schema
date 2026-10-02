@@ -1,466 +1,497 @@
 # Kamus Data — Delivery Ops Layer
 
-Versi skema **companion-2026.10.1**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
+Versi skema **companion-2026.10.2**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
 
-Setiap tabel juga punya kolom `id`, `created_at`, `updated_at` yang diisi otomatis.
+Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan
+**nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,
+`created_at`, `updated_at` yang diisi otomatis.
+
 Data master klien, vendor, proyek, dan PO **tidak** ada di sini — sumbernya MyBhakti
 (briefing hlm. 7); yang disimpan hanya kolom rujukan `mybhakti_*_ref`.
 
 ## Daftar tabel
 
-| Kelompok | Tabel | Pemilik | Diisi oleh | Di NocoDB |
-|---|---|---|---|---|
-| dokumen | `document` | AI Engineer | sistem | ya |
-| kontrak | `contract` | AI Engineer | sistem | ya |
-| kontrak | `contract_party` | AI Engineer | sistem | ya |
-| kontrak | `contract_item` | AI Engineer | sistem | ya |
-| kontrak | `contract_requirement` | AI Engineer | sistem | ya |
-| sph | `sph` | AI Engineer | sistem | ya |
-| sph | `sph_item` | AI Engineer | sistem | ya |
-| bast | `bast` | AI Engineer | sistem | ya |
-| bast | `bast_party` | AI Engineer | sistem | ya |
-| bast | `bast_item` | AI Engineer | sistem | ya |
-| bast | `bast_condition` | AI Engineer | sistem | ya |
-| bast | `bast_draft` | RPA Engineer | sistem | ya |
-| evidence | `evidence_photo` | Network Engineer | sistem | ya |
-| verifikasi | `extracted_field` | AI Engineer | sistem | ya |
-| verifikasi | `field_review` | PM | PM | ya |
-| audit | `extraction_run` | AI Engineer | sistem | tidak |
+| Tabel | Nama teknis | Status | Pemilik | Diisi oleh | Di NocoDB |
+|---|---|---|---|---|---|
+| **Dokumen** | `document` | berlaku | AI Engineer | sistem | ya |
+| **Kontrak** | `contract` | berlaku | AI Engineer | sistem | ya |
+| **Pihak Kontrak** | `contract_party` | berlaku | AI Engineer | sistem | ya |
+| **Rincian Kontrak** | `contract_item` | berlaku | AI Engineer | sistem | ya |
+| **Syarat Kontrak** | `contract_requirement` | berlaku | AI Engineer | sistem | ya |
+| **SPH Vendor** | `sph` | berlaku | AI Engineer | sistem | ya |
+| **Rincian SPH** | `sph_item` | berlaku | AI Engineer | sistem | ya |
+| **BAST** | `bast` | ditunda | AI Engineer | sistem | tidak |
+| **Pihak BAST** | `bast_party` | ditunda | AI Engineer | sistem | tidak |
+| **Rincian BAST** | `bast_item` | ditunda | AI Engineer | sistem | tidak |
+| **Kondisi BAST** | `bast_condition` | ditunda | AI Engineer | sistem | tidak |
+| **Draf BAST** | `bast_draft` | ditunda | RPA Engineer | sistem | tidak |
+| **Foto Evidence** | `evidence_photo` | ditunda | Network Engineer | sistem | tidak |
+| **Hasil Ekstraksi** | `extracted_field` | berlaku | AI Engineer | sistem | ya |
+| **Keputusan PM** | `field_review` | berlaku | PM | PM | ya |
+| **Riwayat Pemrosesan** | `extraction_run` | berlaku | AI Engineer | sistem | tidak |
 
-Urutan pengisian (induk dulu): `document` → `contract` → `contract_party` → `contract_item` → `contract_requirement` → `sph` → `sph_item` → `bast` → `bast_party` → `bast_item` → `bast_condition` → `bast_draft` → `evidence_photo` → `extracted_field` → `field_review` → `extraction_run`
+Urutan pengisian tabel yang berlaku (induk dulu): Dokumen → Kontrak → Pihak Kontrak → Rincian Kontrak → Syarat Kontrak → SPH Vendor → Rincian SPH → Hasil Ekstraksi → Keputusan PM → Riwayat Pemrosesan
 
-## Cara menyusun BAST pelanggan dari nomor kontrak
+## Cara PM memakai tabel ini di NocoDB
 
-Sistem tidak menyalin data ke BAST. Ia mengikuti relasi dari satu nomor kontrak:
+1. Buka **Hasil Ekstraksi**, saring per dokumen. Urutkan **Status Bukti**: kerjakan
+   `bertentangan`, `tidak_ada_di_dokumen`, dan `perlu_dicek` lebih dulu.
+2. `bukti_kuat` artinya nilai itu **ditemukan** di dokumen — bukan berarti benar. Nomor
+   kontrak yang salah bisa tetap `bukti_kuat` bila nomor lain di dokumen kebetulan sama.
+   Harga dan klausul tetap wajib diperiksa (briefing hlm. 20).
+3. Catat setiap keputusan di **Keputusan PM**: `benar`, `dikoreksi` (isi **Nilai Final**),
+   atau `ditolak`. Isi **Nilai Sistem Saat Diperiksa** dengan nilai yang Anda lihat.
+4. Begitu sebuah dokumen punya Keputusan PM, sistem tidak lagi menimpanya otomatis.
 
-| Bagian BAST | Diambil dari | Syarat |
-|---|---|---|
-| Nomor kontrak, nama pekerjaan, nilai | `contract` | field sudah dikonfirmasi PM di `field_review` |
-| Pihak & penandatangan | `contract_party` (lewat `contract_id`) | |
-| Rincian pekerjaan | `contract_item` + info serah terima di `bast_item` | uraian & harga dari kontrak, tidak disalin |
-| Lampiran evidence | `evidence_photo` (lewat `contract_item_id`) | hanya `review_status = approved` |
-| Checklist kelengkapan | `contract_requirement` + `evidence_photo` | semua lampiran wajib terpenuhi |
-| Nomor BAST internal | numbering service (RPA) | sequence database, bukan NocoDB |
+## Nilai yang boleh dipakai dokumen hilir
 
-Bila memakai PostgreSQL, tiga view siap pakai sudah ada di `schema.sql`:
-`bast_rincian`, `evidence_siap_lampiran`, dan `checklist_gabungan`.
+Penyusunan BAST (nanti) hanya membaca nilai yang sudah diputuskan PM `benar` atau
+`dikoreksi` dan belum basi. Di PostgreSQL tersedia view `nilai_terverifikasi` untuk itu;
+field yang belum diperiksa dianggap kosong, bukan diambil dari nilai sistem.
 
-## Dokumen
+## Tabel yang berlaku
+
+### Kelompok: dokumen
 
 Setiap berkas PDF yang masuk.
 
-### `document`
+### Dokumen (`document`)
 
-Supertipe: setiap berkas yang masuk, apa pun jenisnya.
+Setiap berkas yang masuk, apa pun jenisnya.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `source_filename`
-- **Kunci anti-dobel:** `content_hash`
+- **Tampil di NocoDB:** ya, judul baris = **Nama Berkas**
+- **Kunci anti-dobel:** Sidik Berkas
 - **Induk:** —
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `content_hash` | teks | ya | sistem | unik. sha1 isi berkas -- kunci idempotensi; proses ulang = UPDATE |
-| `doc_type` | teks | ya | sistem | Pilihan: `contract`, `sph`, `bast`. |
-| `source_filename` | teks | ya | sistem |  |
-| `page_count` | angka bulat |  | sistem |  |
-| `markdown` | teks |  | sistem | markdown utuh; PM membaca tanpa membuka PDF |
-| `validation_notes` | teks |  | sistem | [2026.10.1] peringatan tingkat dokumen untuk PM, mis. salinan ganda atau jumlah item tidak sama dengan total |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **Sidik Berkas** | `content_hash` | teks | ya | sistem | unik. sha256 isi berkas -- kunci anti-dobel; berkas yang sama diproses ulang memperbarui baris yang sama |
+| **Jenis Dokumen** | `doc_type` | teks | ya | sistem | Pilihan: `kontrak`, `sph`, `bast`. |
+| **Nama Berkas** | `source_filename` | teks | ya | sistem |  |
+| **Jumlah Halaman** | `page_count` | angka bulat |  | sistem |  |
+| **Isi Dokumen** | `markdown` | teks |  | sistem | teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan |
+| **Catatan Validasi** | `validation_notes` | teks |  | sistem | peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total |
 
-## Kontrak
+### Kelompok: kontrak
 
 Kontrak/SPK pelanggan — sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11).
 
-### `contract`
+### Kontrak (`contract`)
 
-Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm. 11). Sumber utama penyusunan draf BAST.
+Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm. 11). Sumber kebenaran BAST pelanggan.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `contract_number`
-- **Kunci anti-dobel:** `document_id`
-- **Induk:** `document`
+- **Tampil di NocoDB:** ya, judul baris = **Nomor Kontrak**
+- **Kunci anti-dobel:** ID Dokumen
+- **Induk:** Dokumen
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `document_id` | angka bulat | ya | sistem | unik. → `document.id`. UNIQUE -> 1:1 dengan document |
-| `mybhakti_project_ref` | teks |  | sistem | [2026.10.1] proyek/deal di MyBhakti, diisi n8n -- kunci pengikat semua dokumen satu proyek; SENGAJA bukan FK (hlm. 7) |
-| `contract_type` | teks |  | sistem | [2026.10.1] bentuk dokumen dasar: nota pesanan, surat pesanan, SPK, kontrak kerja sama, PKS Pilihan: `nota_pesanan`, `surat_pesanan`, `spk`, `kontrak_kerja_sama`, `pks`, `other`. |
-| `contract_number` | teks |  | sistem | nomor kontrak resmi / SPK / PKS |
-| `contract_number_internal` | teks |  | sistem | nomor registrasi internal BUT |
-| `work_title` | teks | ya | sistem | judul pengadaan / lingkup pekerjaan |
-| `contract_date_text` | teks |  | sistem |  |
-| `contract_date` | tanggal |  | sistem |  |
-| `start_date_text` | teks |  | sistem |  |
-| `start_date` | tanggal |  | sistem |  |
-| `end_date_text` | teks |  | sistem |  |
-| `end_date` | tanggal |  | sistem |  |
-| `duration_text` | teks |  | sistem |  |
-| `contract_value` | angka |  | sistem |  |
-| `subtotal_value` | angka |  | sistem |  |
-| `vat_value` | angka |  | sistem |  |
-| `vat_percentage` | teks |  | sistem |  |
-| `currency` | kode 3 huruf | ya | sistem | default IDR |
-| `payment_mechanism` | teks |  | sistem |  |
-| `penalty_terms` | teks |  | sistem |  |
-| `bast_terms` | teks |  | sistem |  |
-| `bank_name` | teks |  | sistem |  |
-| `bank_account_number` | teks |  | sistem |  |
-| `bank_account_name` | teks |  | sistem |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Dokumen** | `document_id` | angka bulat | ya | sistem | unik. → Dokumen. satu kontrak = satu dokumen |
+| **Rujukan Proyek MyBhakti** | `mybhakti_project_ref` | teks |  | sistem | proyek/deal di MyBhakti, diisi n8n -- pengikat semua dokumen satu proyek; sengaja bukan relasi (hlm. 7) |
+| **Jenis Kontrak** | `contract_type` | teks |  | sistem | bentuk dokumen dasar Pilihan: `nota_pesanan`, `surat_pesanan`, `spk`, `kontrak_kerja_sama`, `pks`, `lainnya`. |
+| **Nomor Kontrak** | `contract_number` | teks |  | sistem | nomor resmi kontrak / SPK / PKS |
+| **Nomor Registrasi Internal** | `contract_number_internal` | teks |  | sistem | nomor registrasi internal BUT |
+| **Nama Pekerjaan** | `work_title` | teks |  | sistem | judul pengadaan / lingkup pekerjaan |
+| **Lokasi** | `location_text` | teks |  | sistem | kota/lokasi seperti tertulis di kontrak (tempat dibuat atau pelaksanaan) |
+| **Tanggal Kontrak Tertulis** | `contract_date_text` | teks |  | sistem | apa adanya di dokumen |
+| **Tanggal Kontrak** | `contract_date` | tanggal |  | sistem | hasil baca; kosong bila ragu |
+| **Tanggal Mulai Tertulis** | `start_date_text` | teks |  | sistem |  |
+| **Tanggal Mulai** | `start_date` | tanggal |  | sistem |  |
+| **Tanggal Selesai Tertulis** | `end_date_text` | teks |  | sistem |  |
+| **Tanggal Selesai** | `end_date` | tanggal |  | sistem |  |
+| **Jangka Waktu** | `duration_text` | teks |  | sistem | mis. '30 hari kalender' |
+| **Nilai Kontrak** | `contract_value` | angka |  | sistem | total termasuk PPN bila dokumen menyebutnya begitu |
+| **Subtotal** | `subtotal_value` | angka |  | sistem |  |
+| **Nilai PPN** | `vat_value` | angka |  | sistem |  |
+| **Persentase PPN** | `vat_percentage` | teks |  | sistem | apa adanya di dokumen |
+| **Mata Uang** | `currency` | kode 3 huruf | ya | sistem |  |
+| **Cara Pembayaran** | `payment_mechanism` | teks |  | sistem |  |
+| **Ketentuan Denda** | `penalty_terms` | teks |  | sistem |  |
+| **Syarat Lampiran BAST** | `bast_terms` | teks |  | sistem | ringkasan; rincian per syarat ada di tabel Syarat Kontrak |
+| **Nama Bank** | `bank_name` | teks |  | sistem |  |
+| **Nomor Rekening** | `bank_account_number` | teks |  | sistem |  |
+| **Nama Pemilik Rekening** | `bank_account_name` | teks |  | sistem |  |
 
-### `contract_party`
+### Pihak Kontrak (`contract_party`)
 
-Pihak penandatangan kontrak -- CUPLIKAN seperti tertulis, bukan data master. Satu orang muncul di banyak baris karena menandatangani banyak dokumen.
+Pihak penandatangan kontrak seperti tertulis saat diteken -- bukan data master. Satu orang bisa muncul di banyak baris karena menandatangani banyak dokumen.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `org_name_text`
-- **Kunci anti-dobel:** `contract_id` + `role`
-- **Induk:** `contract`
+- **Tampil di NocoDB:** ya, judul baris = **Nama Instansi**
+- **Kunci anti-dobel:** ID Kontrak + Peran
+- **Induk:** Kontrak
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `contract_id` | angka bulat | ya | sistem | → `contract.id`. |
-| `role` | teks | ya | sistem | first_party/client (pemberi kerja) vs second_party/contractor (pelaksana) Pilihan: `first_party`, `second_party`, `client`, `contractor`. |
-| `org_name_text` | teks | ya | sistem |  |
-| `signer_name` | teks | ya | sistem |  |
-| `signer_title` | teks |  | sistem |  |
-| `org_address_text` | teks |  | sistem |  |
-| `npwp` | teks |  | sistem |  |
-| `mybhakti_party_ref` | teks |  | sistem |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Kontrak** | `contract_id` | angka bulat | ya | sistem | → Kontrak. |
+| **Peran** | `role` | teks | ya | sistem | pemberi_kerja = pelanggan; pelaksana = BUT. Ditentukan dari nama instansi, bukan dari sebutan 'Pihak Pertama/Kedua' Pilihan: `pemberi_kerja`, `pelaksana`. |
+| **Sebutan di Dokumen** | `party_label_text` | teks |  | sistem | mis. 'PIHAK PERTAMA' -- sebutan ini bisa terbalik antar-format kontrak, karena itu disimpan terpisah dari peran |
+| **Nama Instansi** | `org_name_text` | teks | ya | sistem |  |
+| **Nama Penandatangan** | `signer_name` | teks |  | sistem | kosong bila tidak terbaca |
+| **Jabatan Penandatangan** | `signer_title` | teks |  | sistem |  |
+| **Alamat** | `org_address_text` | teks |  | sistem |  |
+| **NPWP** | `npwp` | teks |  | sistem |  |
+| **Rujukan Pihak MyBhakti** | `mybhakti_party_ref` | teks |  | sistem | diisi n8n |
 
-### `contract_item`
+### Rincian Kontrak (`contract_item`)
 
-BoQ kontrak = kewajiban ke pelanggan (hlm. 7). SUMBER TUNGGAL rincian pekerjaan: SPH vendor, BAST, dan evidence menunjuk ke sini, tidak menyalin.
+BoQ kontrak = kewajiban ke pelanggan (hlm. 7). Sumber tunggal rincian pekerjaan untuk BAST pelanggan.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `description`
-- **Kunci anti-dobel:** `contract_id` + `line_no`
-- **Induk:** `contract`
+- **Tampil di NocoDB:** ya, judul baris = **Uraian**
+- **Kunci anti-dobel:** ID Kontrak + No Urut
+- **Induk:** Kontrak
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `contract_id` | angka bulat | ya | sistem | → `contract.id`. |
-| `line_no` | angka bulat | ya | sistem |  |
-| `category` | teks |  | sistem |  |
-| `description` | teks | ya | sistem |  |
-| `specification` | teks |  | sistem |  |
-| `quantity` | angka |  | sistem |  |
-| `unit` | teks |  | sistem |  |
-| `period` | teks |  | sistem |  |
-| `unit_price` | angka |  | sistem | selalu diverifikasi PM (hlm. 20) |
-| `line_total` | angka |  | sistem |  |
-| `remarks` | teks |  | sistem |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Kontrak** | `contract_id` | angka bulat | ya | sistem | → Kontrak. |
+| **No Urut** | `line_no` | angka bulat | ya | sistem | urutan baca di dokumen |
+| **Kelompok** | `category` | teks |  | sistem |  |
+| **Uraian** | `description` | teks | ya | sistem |  |
+| **Spesifikasi** | `specification` | teks |  | sistem |  |
+| **Volume** | `quantity` | angka |  | sistem |  |
+| **Satuan** | `unit` | teks |  | sistem |  |
+| **Periode** | `period` | teks |  | sistem |  |
+| **Harga Satuan** | `unit_price` | angka |  | sistem | selalu dikonfirmasi PM (hlm. 20) |
+| **Jumlah Harga** | `line_total` | angka |  | sistem |  |
+| **Keterangan** | `remarks` | teks |  | sistem |  |
 
-### `contract_requirement`
+### Syarat Kontrak (`contract_requirement`)
 
-[2026.10.1] Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh CHECKLIST GABUNGAN; separuh lainnya evidence teknis milik Network Engineer (hlm. 15).
+Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `requirement_text`
-- **Kunci anti-dobel:** `contract_id` + `line_no`
-- **Induk:** `contract`
+- **Tampil di NocoDB:** ya, judul baris = **Isi Syarat**
+- **Kunci anti-dobel:** ID Kontrak + No Urut
+- **Induk:** Kontrak
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `contract_id` | angka bulat | ya | sistem | → `contract.id`. |
-| `line_no` | angka bulat | ya | sistem |  |
-| `requirement_type` | teks | ya | sistem | lampiran wajib / syarat serah terima / boleh parsial Pilihan: `mandatory_attachment`, `handover_condition`, `partial_delivery`. |
-| `requirement_text` | teks | ya | sistem | mis. 'Berita Acara Uji Terima' |
-| `clause_ref` | teks |  | sistem | pasal rujukan, mis. 'Pasal 9 ayat 2' |
-| `evidence_quote` | teks |  | sistem | kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11) |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Kontrak** | `contract_id` | angka bulat | ya | sistem | → Kontrak. |
+| **No Urut** | `line_no` | angka bulat | ya | sistem |  |
+| **Jenis Syarat** | `requirement_type` | teks | ya | sistem | lampiran wajib / syarat serah terima / boleh parsial Pilihan: `lampiran_wajib`, `syarat_serah_terima`, `boleh_parsial`. |
+| **Isi Syarat** | `requirement_text` | teks | ya | sistem | mis. 'Berita Acara Uji Terima' |
+| **Pasal Rujukan** | `clause_ref` | teks |  | sistem | mis. 'Pasal 9 ayat 2' |
+| **Halaman** | `evidence_page` | angka bulat |  | sistem | halaman tempat syarat ini ditemukan |
+| **Kutipan Dokumen** | `evidence_quote` | teks |  | sistem | kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11) |
 
-## Sph
+### Kelompok: sph
 
 Penawaran vendor yang lahir dari kebutuhan kontrak (rantai hulu).
 
-### `sph`
+### SPH Vendor (`sph`)
 
-SPH vendor (rantai hulu) -- lahir DARI kebutuhan kontrak, bukan dasar kontrak.
+Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `sph_number`
-- **Kunci anti-dobel:** `document_id`
-- **Induk:** `document`
+- **Tampil di NocoDB:** ya, judul baris = **Nomor SPH**
+- **Kunci anti-dobel:** ID Dokumen
+- **Induk:** Dokumen
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `document_id` | angka bulat | ya | sistem | unik. → `document.id`. |
-| `mybhakti_project_ref` | teks |  | sistem | [2026.10.1] proyek yang pengadaannya ditawar; diisi n8n |
-| `mybhakti_vendor_ref` | teks |  | sistem | [2026.10.1] vendor penerbit di MyBhakti; diisi n8n |
-| `sph_number` | teks |  | sistem |  |
-| `sph_date_text` | teks |  | sistem |  |
-| `sph_date` | tanggal |  | sistem |  |
-| `project_name` | teks |  | sistem | perihal / nama pekerjaan yang ditawarkan |
-| `client_name` | teks |  | sistem | instansi yang dituju surat |
-| `vendor_name` | teks |  | sistem | penerbit SPH seperti tertulis |
-| `vendor_npwp` | teks |  | sistem |  |
-| `subtotal_value` | angka |  | sistem |  |
-| `vat_percentage` | teks |  | sistem | apa adanya di dokumen; sering berupa frasa |
-| `vat_value` | angka |  | sistem |  |
-| `total_price` | angka |  | sistem | grand total |
-| `validity_text` | teks |  | sistem | masa berlaku penawaran, mis. '30 hari' |
-| `payment_mechanism` | teks |  | sistem |  |
-| `currency` | kode 3 huruf | ya | sistem | default IDR |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Dokumen** | `document_id` | angka bulat | ya | sistem | unik. → Dokumen. |
+| **Rujukan Proyek MyBhakti** | `mybhakti_project_ref` | teks |  | sistem | diisi n8n |
+| **Rujukan Vendor MyBhakti** | `mybhakti_vendor_ref` | teks |  | sistem | diisi n8n |
+| **Nomor SPH** | `sph_number` | teks |  | sistem |  |
+| **Tanggal SPH Tertulis** | `sph_date_text` | teks |  | sistem |  |
+| **Tanggal SPH** | `sph_date` | tanggal |  | sistem |  |
+| **Perihal** | `project_name` | teks |  | sistem | perihal / nama pekerjaan yang ditawarkan |
+| **Ditujukan Kepada** | `client_name` | teks |  | sistem | instansi yang dituju surat |
+| **Nama Vendor** | `vendor_name` | teks |  | sistem | penerbit SPH seperti tertulis |
+| **NPWP Vendor** | `vendor_npwp` | teks |  | sistem |  |
+| **Subtotal** | `subtotal_value` | angka |  | sistem |  |
+| **Persentase PPN** | `vat_percentage` | teks |  | sistem | apa adanya di dokumen |
+| **Nilai PPN** | `vat_value` | angka |  | sistem |  |
+| **Total Penawaran** | `total_price` | angka |  | sistem | grand total |
+| **Masa Berlaku** | `validity_text` | teks |  | sistem | masa berlaku penawaran |
+| **Cara Pembayaran** | `payment_mechanism` | teks |  | sistem |  |
+| **Mata Uang** | `currency` | kode 3 huruf | ya | sistem |  |
 
-### `sph_item`
+### Rincian SPH (`sph_item`)
 
-Baris penawaran vendor. Beberapa vendor menawar item kontrak yang sama -> dibandingkan lewat contract_item_id.
+Baris penawaran vendor. Relasi ke barang yang dibeli (procurement item) untuk tabel banding harga dirancang di Bulan 5 -- belum ada di sini.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `description`
-- **Kunci anti-dobel:** `sph_id` + `line_no`
-- **Induk:** `contract_item`, `sph`
+- **Tampil di NocoDB:** ya, judul baris = **Uraian**
+- **Kunci anti-dobel:** ID SPH + No Urut
+- **Induk:** SPH Vendor
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `sph_id` | angka bulat | ya | sistem | → `sph.id`. |
-| `line_no` | angka bulat | ya | sistem |  |
-| `contract_item_id` | angka bulat |  | sistem | → `contract_item.id`. [2026.10.1] item kontrak yang dipenuhi baris ini -- kunci price matching & tabel banding antar-vendor (Bulan 5) |
-| `category` | teks |  | sistem |  |
-| `description` | teks | ya | sistem |  |
-| `specification` | teks |  | sistem |  |
-| `brand` | teks |  | sistem |  |
-| `part_number` | teks |  | sistem |  |
-| `quantity` | angka |  | sistem |  |
-| `unit` | teks |  | sistem |  |
-| `period` | teks |  | sistem |  |
-| `unit_price` | angka |  | sistem |  |
-| `line_total` | angka |  | sistem |  |
-| `remarks` | teks |  | sistem |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID SPH** | `sph_id` | angka bulat | ya | sistem | → SPH Vendor. |
+| **No Urut** | `line_no` | angka bulat | ya | sistem | urutan baca, bukan kolom 'No' di dokumen |
+| **Kelompok** | `category` | teks |  | sistem |  |
+| **Uraian** | `description` | teks | ya | sistem |  |
+| **Spesifikasi** | `specification` | teks |  | sistem |  |
+| **Merek** | `brand` | teks |  | sistem |  |
+| **Nomor Part** | `part_number` | teks |  | sistem |  |
+| **Volume** | `quantity` | angka |  | sistem |  |
+| **Satuan** | `unit` | teks |  | sistem |  |
+| **Periode** | `period` | teks |  | sistem |  |
+| **Harga Satuan** | `unit_price` | angka |  | sistem | selalu dikonfirmasi PM (hlm. 20) |
+| **Jumlah Harga** | `line_total` | angka |  | sistem |  |
+| **Keterangan** | `remarks` | teks |  | sistem |  |
 
-## Bast
+### Kelompok: verifikasi
 
-Serah terima. BAST pelanggan dibaca dari kontrak; nomor & render oleh RPA.
+Nilai yang dibaca sistem beserta buktinya, dan keputusan PM per field.
 
-### `bast`
+### Hasil Ekstraksi (`extracted_field`)
 
-BAST (hasil ekstraksi atau hasil generate). Pihak & nilai BAST pelanggan dibaca dari kontrak lewat contract_id. Kolom di sini hanya butir yang selalu/hampir selalu ada.
+Satu baris per field: nilai terbaca + bukti. Antrean kerja PM. Ditulis mesin saja; dokumen yang sudah mulai diperiksa PM tidak ditimpa otomatis.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `bast_number_customer`
-- **Kunci anti-dobel:** `document_id`
-- **Induk:** `contract`, `document`
+- **Tampil di NocoDB:** ya, judul baris = **Nama Field**
+- **Kunci anti-dobel:** ID Dokumen + Nama Field
+- **Induk:** Dokumen
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `document_id` | angka bulat | ya | sistem | unik. → `document.id`. UNIQUE -> 1:1 dengan document |
-| `direction` | teks | ya | sistem | customer = kita->pelanggan (acuan: kontrak); vendor = vendor->kita (acuan: PO) -- hlm. 10 Pilihan: `customer`, `vendor`, `unknown`. |
-| `contract_id` | angka bulat |  | sistem | → `contract.id`. hanya untuk direction=customer |
-| `mybhakti_po_ref` | teks |  | sistem | rujukan opak ke MyBhakti, diisi n8n -- SENGAJA bukan FK (hlm. 7) |
-| `bast_number_customer` | teks |  | sistem | nomor versi pelanggan |
-| `bast_number_internal` | teks |  | sistem | nomor versi BUT -- dari numbering service milik RPA (hlm. 20) |
-| `handover_date_text` | teks |  | sistem | apa adanya di dokumen |
-| `handover_date` | tanggal |  | sistem | hasil parse; NULL kalau gagal |
-| `handover_city` | teks |  | sistem |  |
-| `work_title` | teks | ya | sistem |  |
-| `basis_doc_type` | teks |  | sistem | Pilihan: `contract`, `pks`, `spk`, `order_note`, `purchase_order`, `other`. |
-| `basis_doc_number` | teks |  | sistem | seperti tercetak |
-| `basis_doc_date_text` | teks |  | sistem |  |
-| `basis_doc_date` | tanggal |  | sistem |  |
-| `basis_doc_value` | angka |  | sistem |  |
-| `basis_doc_value_vat` | teks |  | sistem | Pilihan: `included`, `excluded`, `unstated`. |
-| `currency` | kode 3 huruf | ya | sistem | default IDR |
-| `acceptance_statement` | teks |  | sistem |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Dokumen** | `document_id` | angka bulat | ya | sistem | → Dokumen. |
+| **Nama Field** | `field_path` | teks | ya | sistem | mis. 'Nomor Kontrak Kerja' atau 'List Item/Barang[0].Harga Satuan' |
+| **Nilai Terbaca Sistem** | `ai_value_text` | teks |  | sistem |  |
+| **Halaman Bukti** | `evidence_page` | angka bulat |  | sistem | dihitung sistem, bukan ditulis LLM |
+| **Kutipan Bukti** | `evidence_quote` | teks |  | sistem | potongan teks dokumen tempat nilai ditemukan |
+| **Skor Bukti** | `evidence_score` | angka |  | sistem | 0-1: seberapa persis nilai ditemukan di teks dokumen |
+| **Status Bukti** | `system_status` | teks | ya | sistem | saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar Pilihan: `bukti_kuat`, `bukti_cukup`, `perlu_dicek`, `tidak_ada_di_dokumen`, `bertentangan`, `kosong`. |
 
-### `bast_party`
+### Keputusan PM (`field_review`)
 
-Tepat 2 baris per BAST. Cuplikan saat penandatanganan -- jabatan berubah, dokumen yang sudah diteken tidak boleh ikut berubah.
+Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini.
 
-- **Pemilik:** AI Engineer
-- **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `org_name_text`
-- **Kunci anti-dobel:** `bast_id` + `role`
-- **Induk:** `bast`
-
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `bast_id` | angka bulat | ya | sistem | → `bast.id`. |
-| `role` | teks | ya | sistem | peran, BUKAN 'Pihak Pertama/Kedua' -- label itu terbalik antar-format Pilihan: `handover`, `receiver`. |
-| `org_name_text` | teks | ya | sistem | nama seperti ditandatangani |
-| `signer_name` | teks | ya | sistem |  |
-| `signer_title` | teks |  | sistem |  |
-| `org_address_text` | teks |  | sistem |  |
-| `mybhakti_party_ref` | teks |  | sistem | opak, diisi n8n |
-
-### `bast_item`
-
-Baris serah terima. Kolom [2026.10.1] adalah informasi yang baru ada di tahap serah terima (tanggal aktif, AO/SID, lokasi). Harga boleh NULL: format kampus/vendor/instansi tidak memuatnya.
-
-- **Pemilik:** AI Engineer
-- **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `description`
-- **Kunci anti-dobel:** `bast_id` + `line_no`
-- **Induk:** `bast`, `contract_item`
-
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `bast_id` | angka bulat | ya | sistem | → `bast.id`. |
-| `line_no` | angka bulat | ya | sistem |  |
-| `contract_item_id` | angka bulat |  | sistem | → `contract_item.id`. [2026.10.1] baris BoQ kontrak yang diserahkan -- bila terisi, uraian & harga DIBACA dari contract_item, sehingga pasti sama dengan kontrak |
-| `description` | teks | ya | sistem |  |
-| `quantity` | angka |  | sistem |  |
-| `unit` | teks |  | sistem |  |
-| `unit_price` | angka |  | sistem |  |
-| `line_total` | angka |  | sistem |  |
-| `test_result` | teks |  | sistem |  |
-| `activation_date_text` | teks |  | sistem | [2026.10.1] 'Tanggal Aktif' apa adanya |
-| `activation_date` | tanggal |  | sistem | [2026.10.1] hasil parse |
-| `service_order_ref` | teks |  | sistem | [2026.10.1] 'No. AO' layanan |
-| `service_id` | teks |  | sistem | [2026.10.1] 'SID' layanan |
-| `location` | teks |  | sistem | [2026.10.1] lokasi pemasangan / layanan |
-| `remarks` | teks |  | sistem |  |
-
-### `bast_condition`
-
-Fakta tambahan BAST sebagai BARIS. Fakta baru = nilai condition_type baru, bukan kolom baru.
-
-- **Pemilik:** AI Engineer
-- **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `condition_type`
-- **Kunci anti-dobel:** — (diganti utuh per induk)
-- **Induk:** `bast`
-
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `bast_id` | angka bulat | ya | sistem | → `bast.id`. |
-| `condition_type` | teks | ya | sistem | Pilihan: `progress_percent`, `service_active_since`, `acceptance_test_ref`, `delivery_reconciliation_ref`, `supporting_document`, `amount_in_words`. |
-| `value_text` | teks |  | sistem |  |
-| `value_number` | angka |  | sistem |  |
-| `value_date` | tanggal |  | sistem |  |
-
-### `bast_draft`
-
-Draf BAST pelanggan dari kontrak terverifikasi. Nomor dari numbering service, render oleh dol-render (RPA), lampiran oleh compiler BAST (Network).
-
-- **Pemilik:** RPA Engineer
-- **Diisi oleh:** sistem; kolom milik PM: `approved_by`, `approved_at`
-- **Tampil di NocoDB:** ya, judul baris = `work_title`
-- **Kunci anti-dobel:** — (diganti utuh per induk)
-- **Induk:** `bast`, `contract`
-
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `contract_id` | angka bulat | ya | sistem | → `contract.id`. |
-| `draft_bast_number` | teks |  | sistem |  |
-| `work_title` | teks | ya | sistem |  |
-| `handover_date_text` | teks |  | sistem |  |
-| `handover_date` | tanggal |  | sistem |  |
-| `handover_city` | teks |  | sistem |  |
-| `status` | teks | ya | sistem | Pilihan: `draft`, `pending_review`, `approved`, `generated`, `rejected`. |
-| `template_name` | teks |  | sistem | format_telkom / format_kampus / format_instansi |
-| `acceptance_statement` | teks |  | sistem |  |
-| `generated_doc_url` | teks |  | sistem |  |
-| `generated_bast_id` | angka bulat |  | sistem | → `bast.id`. terisi saat status=generated; tanpa ini, kontrak yang di-generate ulang membuat PM tidak tahu draf mana menghasilkan BAST yang mana |
-| `approved_by` | teks |  | PM | HANYA diisi manusia (PM) |
-| `approved_at` | tanggal & jam |  | PM | HANYA diisi manusia (PM) |
-
-## Evidence
-
-Foto bukti lapangan dari ODK Central (wilayah Network Engineer).
-
-### `evidence_photo`
-
-[2026.10.1] USULAN untuk disepakati dengan Network Engineer (wilayah dol-odk & dol-bast-compiler, hlm. 15). Foto masuk lewat n8n dari ODK Central SETELAH lolos pemeriksaan otomatis (GPS ada, dalam radius lokasi, dalam masa kontrak); PM lalu menyetujui/menolak di NocoDB. Lampiran BAST hanya memakai review_status=approved.
-
-- **Pemilik:** Network Engineer
-- **Diisi oleh:** sistem; kolom milik PM: `review_status`, `reviewed_by`, `reviewed_at`, `review_note`
-- **Tampil di NocoDB:** ya, judul baris = `component_label`
-- **Kunci anti-dobel:** `odk_instance_id`
-- **Induk:** `contract_item`, `contract_requirement`
-
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `odk_instance_id` | teks | ya | sistem | unik. ID submission ODK Central -- sinkron ulang = update, bukan baris kembar |
-| `contract_item_id` | angka bulat | ya | sistem | → `contract_item.id`. baris BoQ kontrak yang dibuktikan foto ini |
-| `requirement_id` | angka bulat |  | sistem | → `contract_requirement.id`. lampiran wajib kontrak yang dipenuhi (bila ada) -- sambungan checklist gabungan |
-| `component_label` | teks |  | sistem | mis. '4 Unit Switch', '1 Unit Router' |
-| `photo_type` | teks | ya | sistem | foto barang / label serial number / pemasangan / tangkapan layar Pilihan: `item`, `serial_label`, `installation`, `screenshot`. |
-| `serial_number` | teks |  | sistem | wajib untuk foto label SN; bahan registry aset & garansi (Bulan 6) |
-| `photo_url` | teks | ya | sistem |  |
-| `taken_at` | tanggal & jam | ya | sistem | waktu pengambilan foto |
-| `gps_lat` | koordinat GPS |  | sistem | lintang, mis. -7.347824 |
-| `gps_lon` | koordinat GPS |  | sistem | bujur, mis. 108.232318 |
-| `auto_check_notes` | teks |  | sistem | catatan pemeriksaan otomatis n8n, mis. 'jarak 120 m dari lokasi proyek' |
-| `review_status` | teks | ya | PM | pending = belum dicek. HANYA PM yang mengubah Pilihan: `pending`, `approved`, `rejected`. |
-| `reviewed_by` | teks |  | PM | HANYA diisi PM |
-| `reviewed_at` | tanggal & jam |  | PM | HANYA diisi PM |
-| `review_note` | teks |  | PM | alasan bila ditolak, mis. 'SN tidak terbaca' |
-
-## Verifikasi
-
-Nilai hasil ekstraksi beserta skor & buktinya, dan keputusan PM per field.
-
-### `extracted_field`
-
-Satu baris per field: nilai ekstraksi + skor + bukti. Antrean kerja PM. Ditulis mesin saja; nilai terbaru per field.
-
-- **Pemilik:** AI Engineer
-- **Diisi oleh:** sistem
-- **Tampil di NocoDB:** ya, judul baris = `field_path`
-- **Kunci anti-dobel:** `document_id` + `field_path`
-- **Induk:** `document`
-
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `document_id` | angka bulat | ya | sistem | → `document.id`. |
-| `field_path` | teks | ya | sistem | mis. contract.Nomor Kontrak Kerja |
-| `ai_value_text` | teks |  | sistem |  |
-| `evidence_page` | angka bulat |  | sistem | dihitung deterministik, BUKAN ditulis LLM |
-| `evidence_quote` | teks |  | sistem | potongan teks dokumen yang cocok |
-| `evidence_score` | angka |  | sistem | 0-1: seberapa persis nilai ditemukan di teks dokumen |
-| `system_status` | teks | ya | sistem | saran sistem, BUKAN persetujuan Pilihan: `auto_verified`, `auto_accepted`, `review_required`, `unsupported`, `conflict`, `missing`. |
-
-### `field_review`
-
-Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini.
-
+- **Status:** berlaku
 - **Pemilik:** PM
 - **Diisi oleh:** PM (manusia)
-- **Tampil di NocoDB:** ya, judul baris = `field_path`
-- **Kunci anti-dobel:** `document_id` + `field_path`
-- **Induk:** `document`
+- **Tampil di NocoDB:** ya, judul baris = **Nama Field**
+- **Kunci anti-dobel:** ID Dokumen + Nama Field
+- **Induk:** Dokumen
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `document_id` | angka bulat | ya | PM | → `document.id`. RESTRICT: dokumen dengan keputusan PM tidak boleh terhapus diam-diam |
-| `field_path` | teks | ya | PM |  |
-| `reviewed_ai_value_text` | teks |  | PM | nilai AI yang DILIHAT PM saat memutuskan; kalau nilai AI berubah, konfirmasi lama tidak berlaku untuk nilai baru |
-| `decision` | teks | ya | PM | Pilihan: `confirmed`, `corrected`, `rejected`. |
-| `final_value_text` | teks |  | PM |  |
-| `reviewed_by` | teks | ya | PM |  |
-| `reviewed_at` | tanggal & jam | ya | PM |  |
-| `reviewer_note` | teks |  | PM |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Dokumen** | `document_id` | angka bulat | ya | PM | → Dokumen. dokumen dengan keputusan PM tidak boleh terhapus diam-diam |
+| **Nama Field** | `field_path` | teks | ya | PM |  |
+| **Nilai Sistem Saat Diperiksa** | `reviewed_ai_value_text` | teks |  | PM | nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru |
+| **Keputusan** | `decision` | teks | ya | PM | Pilihan: `benar`, `dikoreksi`, `ditolak`. |
+| **Nilai Final** | `final_value_text` | teks |  | PM | wajib diisi bila dikoreksi |
+| **Diperiksa Oleh** | `reviewed_by` | teks | ya | PM |  |
+| **Waktu Diperiksa** | `reviewed_at` | tanggal & jam | ya | PM |  |
+| **Catatan PM** | `reviewer_note` | teks |  | PM |  |
 
-## Audit
+### Kelompok: audit
 
 Jejak teknis pemrosesan — hanya di PostgreSQL, tidak tampil di NocoDB.
 
-### `extraction_run`
+### Riwayat Pemrosesan (`extraction_run`)
 
-Jejak tiap pemrosesan -- dasar bukti 'Terukur' (hlm. 21). Hanya di PostgreSQL: NocoDB hanya memuat nilai ekstraksi + confidence, bukan metadata teknis AI.
+Jejak tiap pemrosesan -- dasar bukti 'Terukur' (hlm. 21). Hanya di PostgreSQL.
 
+- **Status:** berlaku
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
 - **Tampil di NocoDB:** tidak (hanya PostgreSQL)
-- **Kunci anti-dobel:** — (diganti utuh per induk)
-- **Induk:** `document`
+- **Kunci anti-dobel:** — (belum ada)
+- **Induk:** Dokumen
 
-| Kolom | Tipe | Wajib | Diisi | Keterangan |
-|---|---|---|---|---|
-| `document_id` | angka bulat | ya | sistem | → `document.id`. |
-| `ocr_engine` | teks |  | sistem |  |
-| `llm_model` | teks |  | sistem |  |
-| `prompt_version` | teks |  | sistem |  |
-| `schema_version` | teks |  | sistem |  |
-| `llm_call_count` | angka bulat |  | sistem |  |
-| `parse_seconds` | angka |  | sistem |  |
-| `extract_seconds` | angka |  | sistem |  |
-| `validation_status` | teks |  | sistem |  |
-| `started_at` | tanggal & jam |  | sistem |  |
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Dokumen** | `document_id` | angka bulat | ya | sistem | → Dokumen. |
+| **Mesin OCR** | `ocr_engine` | teks |  | sistem |  |
+| **Model LLM** | `llm_model` | teks |  | sistem |  |
+| **Versi Prompt** | `prompt_version` | teks |  | sistem |  |
+| **Versi Skema** | `schema_version` | teks |  | sistem |  |
+| **Jumlah Panggilan LLM** | `llm_call_count` | angka bulat |  | sistem |  |
+| **Detik Pembacaan** | `parse_seconds` | angka |  | sistem |  |
+| **Detik Ekstraksi** | `extract_seconds` | angka |  | sistem |  |
+| **Status Validasi** | `validation_status` | teks |  | sistem |  |
+| **Mulai** | `started_at` | tanggal & jam |  | sistem |  |
+
+## Tabel usulan (ditunda)
+
+Belum dibuat di NocoDB. Menunggu kesepakatan bersama RPA Engineer (nomor & render
+BAST) dan Network Engineer (evidence & lampiran). DDL-nya ada di
+`generated/schema_usulan.sql` untuk dibahas di workshop skema.
+Pilihan nilainya sengaja belum diterjemahkan: diputuskan saat disepakati.
+
+### Kelompok: bast
+
+Serah terima. BAST pelanggan dibaca dari kontrak; nomor & render oleh RPA.
+
+### BAST (`bast`)
+
+DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. BAST hasil ekstraksi dokumen lama atau hasil susunan sistem.
+
+- **Status:** ditunda
+- **Pemilik:** AI Engineer
+- **Diisi oleh:** sistem
+- **Tampil di NocoDB:** belum — tabel usulan
+- **Kunci anti-dobel:** ID Dokumen
+- **Induk:** Kontrak, Dokumen
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Dokumen** | `document_id` | angka bulat | ya | sistem | unik. → Dokumen. |
+| **Arah** | `direction` | teks | ya | sistem | customer = kita->pelanggan (acuan: kontrak); vendor = vendor->kita (acuan: PO) -- hlm. 10 Pilihan: `customer`, `vendor`, `unknown`. |
+| **ID Kontrak** | `contract_id` | angka bulat |  | sistem | → Kontrak. hanya untuk BAST pelanggan |
+| **Rujukan PO MyBhakti** | `mybhakti_po_ref` | teks |  | sistem | diisi n8n; bukan relasi |
+| **Nomor BAST Pelanggan** | `bast_number_customer` | teks |  | sistem |  |
+| **Nomor BAST Internal** | `bast_number_internal` | teks |  | sistem | dari numbering service milik RPA (hlm. 20) |
+| **Tanggal Serah Terima Tertulis** | `handover_date_text` | teks |  | sistem |  |
+| **Tanggal Serah Terima** | `handover_date` | tanggal |  | sistem |  |
+| **Kota Serah Terima** | `handover_city` | teks |  | sistem |  |
+| **Nama Pekerjaan** | `work_title` | teks |  | sistem |  |
+| **Jenis Dokumen Dasar** | `basis_doc_type` | teks |  | sistem | Pilihan: `contract`, `pks`, `spk`, `order_note`, `purchase_order`, `other`. |
+| **Nomor Dokumen Dasar** | `basis_doc_number` | teks |  | sistem |  |
+| **Tanggal Dokumen Dasar Tertulis** | `basis_doc_date_text` | teks |  | sistem |  |
+| **Tanggal Dokumen Dasar** | `basis_doc_date` | tanggal |  | sistem |  |
+| **Nilai Dokumen Dasar** | `basis_doc_value` | angka |  | sistem |  |
+| **PPN Nilai Dasar** | `basis_doc_value_vat` | teks |  | sistem | Pilihan: `included`, `excluded`, `unstated`. |
+| **Mata Uang** | `currency` | kode 3 huruf | ya | sistem |  |
+| **Pernyataan Penerimaan** | `acceptance_statement` | teks |  | sistem |  |
+
+### Pihak BAST (`bast_party`)
+
+DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Tepat 2 baris per BAST: penyerah dan penerima.
+
+- **Status:** ditunda
+- **Pemilik:** AI Engineer
+- **Diisi oleh:** sistem
+- **Tampil di NocoDB:** belum — tabel usulan
+- **Kunci anti-dobel:** ID BAST + Peran
+- **Induk:** BAST
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID BAST** | `bast_id` | angka bulat | ya | sistem | → BAST. |
+| **Peran** | `role` | teks | ya | sistem | peran, BUKAN 'Pihak Pertama/Kedua' -- label itu terbalik antar-format Pilihan: `handover`, `receiver`. |
+| **Nama Instansi** | `org_name_text` | teks | ya | sistem |  |
+| **Nama Penandatangan** | `signer_name` | teks |  | sistem | kosong bila tidak terbaca |
+| **Jabatan Penandatangan** | `signer_title` | teks |  | sistem |  |
+| **Alamat** | `org_address_text` | teks |  | sistem |  |
+| **Rujukan Pihak MyBhakti** | `mybhakti_party_ref` | teks |  | sistem |  |
+
+### Rincian BAST (`bast_item`)
+
+DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Baris serah terima.
+
+- **Status:** ditunda
+- **Pemilik:** AI Engineer
+- **Diisi oleh:** sistem
+- **Tampil di NocoDB:** belum — tabel usulan
+- **Kunci anti-dobel:** ID BAST + No Urut
+- **Induk:** BAST, Rincian Kontrak
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID BAST** | `bast_id` | angka bulat | ya | sistem | → BAST. |
+| **No Urut** | `line_no` | angka bulat | ya | sistem |  |
+| **ID Rincian Kontrak** | `contract_item_id` | angka bulat |  | sistem | → Rincian Kontrak. baris BoQ kontrak yang diserahkan; uraian & harga dibaca dari kontrak |
+| **Uraian** | `description` | teks | ya | sistem |  |
+| **Volume** | `quantity` | angka |  | sistem | volume yang DISERAHKAN -- bisa lebih kecil dari kontrak bila parsial |
+| **Satuan** | `unit` | teks |  | sistem |  |
+| **Harga Satuan** | `unit_price` | angka |  | sistem |  |
+| **Jumlah Harga** | `line_total` | angka |  | sistem |  |
+| **Hasil Uji** | `test_result` | teks |  | sistem | diisi setelah uji, bukan sebelumnya |
+| **Tanggal Aktif Tertulis** | `activation_date_text` | teks |  | sistem |  |
+| **Tanggal Aktif** | `activation_date` | tanggal |  | sistem |  |
+| **Nomor AO** | `service_order_ref` | teks |  | sistem |  |
+| **SID** | `service_id` | teks |  | sistem |  |
+| **Lokasi** | `location` | teks |  | sistem |  |
+| **Keterangan** | `remarks` | teks |  | sistem |  |
+
+### Kondisi BAST (`bast_condition`)
+
+DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Fakta tambahan BAST sebagai baris, bukan kolom baru.
+
+- **Status:** ditunda
+- **Pemilik:** AI Engineer
+- **Diisi oleh:** sistem
+- **Tampil di NocoDB:** belum — tabel usulan
+- **Kunci anti-dobel:** — (belum ada)
+- **Induk:** BAST
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID BAST** | `bast_id` | angka bulat | ya | sistem | → BAST. |
+| **Jenis Kondisi** | `condition_type` | teks | ya | sistem | Pilihan: `progress_percent`, `service_active_since`, `acceptance_test_ref`, `delivery_reconciliation_ref`, `supporting_document`, `amount_in_words`. |
+| **Nilai Teks** | `value_text` | teks |  | sistem |  |
+| **Nilai Angka** | `value_number` | angka |  | sistem |  |
+| **Nilai Tanggal** | `value_date` | tanggal |  | sistem |  |
+
+### Draf BAST (`bast_draft`)
+
+DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Belum punya kunci anti-dobel: wajib diputuskan sebelum berlaku, karena tanpa kunci, pengiriman ulang menghapus persetujuan PM.
+
+- **Status:** ditunda
+- **Pemilik:** RPA Engineer
+- **Diisi oleh:** sistem; kolom milik PM: Disetujui Oleh, Waktu Disetujui
+- **Tampil di NocoDB:** belum — tabel usulan
+- **Kunci anti-dobel:** — (belum ada)
+- **Induk:** BAST, Kontrak
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Kontrak** | `contract_id` | angka bulat | ya | sistem | → Kontrak. |
+| **Nomor Draf** | `draft_bast_number` | teks |  | sistem |  |
+| **Nama Pekerjaan** | `work_title` | teks | ya | sistem |  |
+| **Tanggal Serah Terima Tertulis** | `handover_date_text` | teks |  | sistem |  |
+| **Tanggal Serah Terima** | `handover_date` | tanggal |  | sistem |  |
+| **Kota Serah Terima** | `handover_city` | teks |  | sistem |  |
+| **Status** | `status` | teks | ya | sistem | Pilihan: `draft`, `pending_review`, `approved`, `generated`, `rejected`. |
+| **Template** | `template_name` | teks |  | sistem |  |
+| **Pernyataan Penerimaan** | `acceptance_statement` | teks |  | sistem |  |
+| **Tautan Dokumen** | `generated_doc_url` | teks |  | sistem |  |
+| **ID BAST Tercetak** | `generated_bast_id` | angka bulat |  | sistem | → BAST. |
+| **Disetujui Oleh** | `approved_by` | teks |  | PM |  |
+| **Waktu Disetujui** | `approved_at` | tanggal & jam |  | PM |  |
+
+### Kelompok: evidence
+
+Foto bukti lapangan dari ODK Central (wilayah Network Engineer).
+
+### Foto Evidence (`evidence_photo`)
+
+DITUNDA: usulan untuk disepakati dengan Network Engineer (dol-odk & dol-bast-compiler, hlm. 15). Lampiran wajib kontrak sering berupa DOKUMEN (BA uji terima, surat jalan), bukan foto -- bentuk tabel bukti perlu dibahas bersama.
+
+- **Status:** ditunda
+- **Pemilik:** Network Engineer
+- **Diisi oleh:** sistem; kolom milik PM: Status Review, Diperiksa Oleh, Waktu Diperiksa, Catatan Review
+- **Tampil di NocoDB:** belum — tabel usulan
+- **Kunci anti-dobel:** ID Kiriman ODK
+- **Induk:** Rincian Kontrak, Syarat Kontrak
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Kiriman ODK** | `odk_instance_id` | teks | ya | sistem | unik. sinkron ulang = pembaruan, bukan baris kembar |
+| **ID Rincian Kontrak** | `contract_item_id` | angka bulat | ya | sistem | → Rincian Kontrak. |
+| **ID Syarat Kontrak** | `requirement_id` | angka bulat |  | sistem | → Syarat Kontrak. |
+| **Komponen** | `component_label` | teks |  | sistem | mis. '4 Unit Switch' |
+| **Jenis Foto** | `photo_type` | teks | ya | sistem | Pilihan: `item`, `serial_label`, `installation`, `screenshot`. |
+| **Nomor Seri** | `serial_number` | teks |  | sistem |  |
+| **Tautan Foto** | `photo_url` | teks | ya | sistem |  |
+| **Waktu Foto** | `taken_at` | tanggal & jam | ya | sistem |  |
+| **Lintang** | `gps_lat` | koordinat GPS |  | sistem |  |
+| **Bujur** | `gps_lon` | koordinat GPS |  | sistem |  |
+| **Catatan Cek Otomatis** | `auto_check_notes` | teks |  | sistem |  |
+| **Status Review** | `review_status` | teks | ya | PM | Pilihan: `pending`, `approved`, `rejected`. |
+| **Diperiksa Oleh** | `reviewed_by` | teks |  | PM |  |
+| **Waktu Diperiksa** | `reviewed_at` | tanggal & jam |  | PM |  |
+| **Catatan Review** | `review_note` | teks |  | PM |  |

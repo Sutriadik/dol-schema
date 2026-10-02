@@ -14,6 +14,7 @@ from dol_schema import (
     ALL_TABLES,
     SCHEMA_VERSION,
     generate_ddl,
+    generate_ddl_usulan,
     to_json,
     to_dbml,
     to_kamus,
@@ -28,6 +29,7 @@ OUT = ROOT / "generated"
 def _artifacts() -> dict[Path, str]:
     return {
         OUT / "schema.sql": generate_ddl(),
+        OUT / "schema_usulan.sql": generate_ddl_usulan(),
         OUT / "schema.json": to_json(to_schema_dict()),
         OUT / "nocodb_fields.json": to_json(to_nocodb_fields()),
         OUT / "schema.dbml": to_dbml(),
@@ -61,7 +63,8 @@ def cmd_tables() -> int:
         penulis = "MANUSIA" if t.written_by == "human" else "mesin"
         fk = [c.fk.split(".")[0] for c in t.columns if c.fk]
         rujuk = f"  -> {', '.join(fk)}" if fk else ""
-        print(f"  {t.name:<18} {len(t.columns):>2} kolom   ditulis {penulis}{rujuk}")
+        print(f"  {t.name:<21} {t.label:<20} {t.status:<8} {len(t.columns):>2} kolom   "
+              f"ditulis {penulis}{rujuk}")
     return 0
 
 

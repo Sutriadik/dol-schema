@@ -4,6 +4,9 @@ Validasi payload companion terhadap definisi model.
 Dijalankan SEBELUM payload menyentuh NocoDB. Pada exporter lama, kolom bertipe salah membuat
 baris gagal masuk tanpa pesan yang jelas -- yang hilang justru baris yang paling perlu
 dikoreksi manusia. Di sini setiap pelanggaran disebutkan tabel, baris, kolom, dan sebabnya.
+
+Tabel berstatus 'ditunda' tetap divalidasi (supaya usulan bisa diuji dengan data nyata),
+tetapi pengirim tidak boleh mengirimnya ke NocoDB.
 """
 from __future__ import annotations
 

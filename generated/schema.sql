@@ -1,5 +1,5 @@
--- Open ADE — Companion data model untuk NocoDB
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.1).
+-- Delivery Ops Layer — skema companion (tabel yang BERLAKU)
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.2).
 -- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.
 
 -- Menjaga updated_at tetap benar tanpa bergantung pada aplikasi yang menulis.
@@ -10,7 +10,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Supertipe: setiap berkas yang masuk, apa pun jenisnya.
+-- Dokumen
+-- Setiap berkas yang masuk, apa pun jenisnya.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS document (
     id                         bigserial PRIMARY KEY,
@@ -22,16 +23,26 @@ CREATE TABLE IF NOT EXISTS document (
     validation_notes           text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT document_doc_type_valid CHECK (doc_type IN ('contract', 'sph', 'bast')),
+    CONSTRAINT document_doc_type_valid CHECK (doc_type IN ('kontrak', 'sph', 'bast')),
     CONSTRAINT document_page_count_check CHECK (page_count > 0)
 );
 DROP TRIGGER IF EXISTS trg_document_updated_at ON document;
 CREATE TRIGGER trg_document_updated_at BEFORE UPDATE ON document
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE document IS 'Dokumen -- Setiap berkas yang masuk, apa pun jenisnya.';
+COMMENT ON COLUMN document.content_hash IS 'Sidik Berkas -- sha256 isi berkas -- kunci anti-dobel; berkas yang sama diproses ulang memperbarui baris yang sama';
+COMMENT ON COLUMN document.doc_type IS 'Jenis Dokumen';
+COMMENT ON COLUMN document.source_filename IS 'Nama Berkas';
+COMMENT ON COLUMN document.page_count IS 'Jumlah Halaman';
+COMMENT ON COLUMN document.markdown IS 'Isi Dokumen -- teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan';
+COMMENT ON COLUMN document.validation_notes IS 'Catatan Validasi -- peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total';
+COMMENT ON COLUMN document.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN document.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
+-- Kontrak
 -- Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm.
 -- 11).
--- Sumber utama penyusunan draf BAST.
+-- Sumber kebenaran BAST pelanggan.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS contract (
     id                         bigserial PRIMARY KEY,
@@ -40,7 +51,8 @@ CREATE TABLE IF NOT EXISTS contract (
     contract_type              text,
     contract_number            text,
     contract_number_internal   text,
-    work_title                 text NOT NULL,
+    work_title                 text,
+    location_text              text,
     contract_date_text         text,
     contract_date              date,
     start_date_text            text,
@@ -61,7 +73,7 @@ CREATE TABLE IF NOT EXISTS contract (
     bank_account_name          text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT contract_contract_type_valid CHECK (contract_type IN ('nota_pesanan', 'surat_pesanan', 'spk', 'kontrak_kerja_sama', 'pks', 'other')),
+    CONSTRAINT contract_contract_type_valid CHECK (contract_type IN ('nota_pesanan', 'surat_pesanan', 'spk', 'kontrak_kerja_sama', 'pks', 'lainnya')),
     CONSTRAINT contract_contract_value_check CHECK (contract_value >= 0),
     CONSTRAINT contract_subtotal_value_check CHECK (subtotal_value >= 0),
     CONSTRAINT contract_vat_value_check CHECK (vat_value >= 0)
@@ -69,16 +81,46 @@ CREATE TABLE IF NOT EXISTS contract (
 DROP TRIGGER IF EXISTS trg_contract_updated_at ON contract;
 CREATE TRIGGER trg_contract_updated_at BEFORE UPDATE ON contract
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE contract IS 'Kontrak -- Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm. 11). Sumber kebenaran BAST pelanggan.';
+COMMENT ON COLUMN contract.document_id IS 'ID Dokumen -- satu kontrak = satu dokumen';
+COMMENT ON COLUMN contract.mybhakti_project_ref IS 'Rujukan Proyek MyBhakti -- proyek/deal di MyBhakti, diisi n8n -- pengikat semua dokumen satu proyek; sengaja bukan relasi (hlm. 7)';
+COMMENT ON COLUMN contract.contract_type IS 'Jenis Kontrak -- bentuk dokumen dasar';
+COMMENT ON COLUMN contract.contract_number IS 'Nomor Kontrak -- nomor resmi kontrak / SPK / PKS';
+COMMENT ON COLUMN contract.contract_number_internal IS 'Nomor Registrasi Internal -- nomor registrasi internal BUT';
+COMMENT ON COLUMN contract.work_title IS 'Nama Pekerjaan -- judul pengadaan / lingkup pekerjaan';
+COMMENT ON COLUMN contract.location_text IS 'Lokasi -- kota/lokasi seperti tertulis di kontrak (tempat dibuat atau pelaksanaan)';
+COMMENT ON COLUMN contract.contract_date_text IS 'Tanggal Kontrak Tertulis -- apa adanya di dokumen';
+COMMENT ON COLUMN contract.contract_date IS 'Tanggal Kontrak -- hasil baca; kosong bila ragu';
+COMMENT ON COLUMN contract.start_date_text IS 'Tanggal Mulai Tertulis';
+COMMENT ON COLUMN contract.start_date IS 'Tanggal Mulai';
+COMMENT ON COLUMN contract.end_date_text IS 'Tanggal Selesai Tertulis';
+COMMENT ON COLUMN contract.end_date IS 'Tanggal Selesai';
+COMMENT ON COLUMN contract.duration_text IS 'Jangka Waktu -- mis. ''30 hari kalender''';
+COMMENT ON COLUMN contract.contract_value IS 'Nilai Kontrak -- total termasuk PPN bila dokumen menyebutnya begitu';
+COMMENT ON COLUMN contract.subtotal_value IS 'Subtotal';
+COMMENT ON COLUMN contract.vat_value IS 'Nilai PPN';
+COMMENT ON COLUMN contract.vat_percentage IS 'Persentase PPN -- apa adanya di dokumen';
+COMMENT ON COLUMN contract.currency IS 'Mata Uang';
+COMMENT ON COLUMN contract.payment_mechanism IS 'Cara Pembayaran';
+COMMENT ON COLUMN contract.penalty_terms IS 'Ketentuan Denda';
+COMMENT ON COLUMN contract.bast_terms IS 'Syarat Lampiran BAST -- ringkasan; rincian per syarat ada di tabel Syarat Kontrak';
+COMMENT ON COLUMN contract.bank_name IS 'Nama Bank';
+COMMENT ON COLUMN contract.bank_account_number IS 'Nomor Rekening';
+COMMENT ON COLUMN contract.bank_account_name IS 'Nama Pemilik Rekening';
+COMMENT ON COLUMN contract.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN contract.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
--- Pihak penandatangan kontrak -- CUPLIKAN seperti tertulis, bukan data master.
--- Satu orang muncul di banyak baris karena menandatangani banyak dokumen.
+-- Pihak Kontrak
+-- Pihak penandatangan kontrak seperti tertulis saat diteken -- bukan data master.
+-- Satu orang bisa muncul di banyak baris karena menandatangani banyak dokumen.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS contract_party (
     id                         bigserial PRIMARY KEY,
     contract_id                integer NOT NULL REFERENCES contract(id) ON DELETE CASCADE,
     role                       text NOT NULL,
+    party_label_text           text,
     org_name_text              text NOT NULL,
-    signer_name                text NOT NULL,
+    signer_name                text,
     signer_title               text,
     org_address_text           text,
     npwp                       text,
@@ -86,16 +128,29 @@ CREATE TABLE IF NOT EXISTS contract_party (
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
     UNIQUE (contract_id, role),
-    CONSTRAINT contract_party_role_valid CHECK (role IN ('first_party', 'second_party', 'client', 'contractor'))
+    CONSTRAINT contract_party_role_valid CHECK (role IN ('pemberi_kerja', 'pelaksana'))
 );
 CREATE INDEX IF NOT EXISTS idx_contract_party_contract_id ON contract_party(contract_id);
 DROP TRIGGER IF EXISTS trg_contract_party_updated_at ON contract_party;
 CREATE TRIGGER trg_contract_party_updated_at BEFORE UPDATE ON contract_party
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE contract_party IS 'Pihak Kontrak -- Pihak penandatangan kontrak seperti tertulis saat diteken -- bukan data master. Satu orang bisa muncul di banyak baris karena menandatangani banyak dokumen.';
+COMMENT ON COLUMN contract_party.contract_id IS 'ID Kontrak';
+COMMENT ON COLUMN contract_party.role IS 'Peran -- pemberi_kerja = pelanggan; pelaksana = BUT. Ditentukan dari nama instansi, bukan dari sebutan ''Pihak Pertama/Kedua''';
+COMMENT ON COLUMN contract_party.party_label_text IS 'Sebutan di Dokumen -- mis. ''PIHAK PERTAMA'' -- sebutan ini bisa terbalik antar-format kontrak, karena itu disimpan terpisah dari peran';
+COMMENT ON COLUMN contract_party.org_name_text IS 'Nama Instansi';
+COMMENT ON COLUMN contract_party.signer_name IS 'Nama Penandatangan -- kosong bila tidak terbaca';
+COMMENT ON COLUMN contract_party.signer_title IS 'Jabatan Penandatangan';
+COMMENT ON COLUMN contract_party.org_address_text IS 'Alamat';
+COMMENT ON COLUMN contract_party.npwp IS 'NPWP';
+COMMENT ON COLUMN contract_party.mybhakti_party_ref IS 'Rujukan Pihak MyBhakti -- diisi n8n';
+COMMENT ON COLUMN contract_party.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN contract_party.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
+-- Rincian Kontrak
 -- BoQ kontrak = kewajiban ke pelanggan (hlm.
 -- 7).
--- SUMBER TUNGGAL rincian pekerjaan: SPH vendor, BAST, dan evidence menunjuk ke sini, tidak menyalin.
+-- Sumber tunggal rincian pekerjaan untuk BAST pelanggan.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS contract_item (
     id                         bigserial PRIMARY KEY,
@@ -122,11 +177,25 @@ CREATE INDEX IF NOT EXISTS idx_contract_item_contract_id ON contract_item(contra
 DROP TRIGGER IF EXISTS trg_contract_item_updated_at ON contract_item;
 CREATE TRIGGER trg_contract_item_updated_at BEFORE UPDATE ON contract_item
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE contract_item IS 'Rincian Kontrak -- BoQ kontrak = kewajiban ke pelanggan (hlm. 7). Sumber tunggal rincian pekerjaan untuk BAST pelanggan.';
+COMMENT ON COLUMN contract_item.contract_id IS 'ID Kontrak';
+COMMENT ON COLUMN contract_item.line_no IS 'No Urut -- urutan baca di dokumen';
+COMMENT ON COLUMN contract_item.category IS 'Kelompok';
+COMMENT ON COLUMN contract_item.description IS 'Uraian';
+COMMENT ON COLUMN contract_item.specification IS 'Spesifikasi';
+COMMENT ON COLUMN contract_item.quantity IS 'Volume';
+COMMENT ON COLUMN contract_item.unit IS 'Satuan';
+COMMENT ON COLUMN contract_item.period IS 'Periode';
+COMMENT ON COLUMN contract_item.unit_price IS 'Harga Satuan -- selalu dikonfirmasi PM (hlm. 20)';
+COMMENT ON COLUMN contract_item.line_total IS 'Jumlah Harga';
+COMMENT ON COLUMN contract_item.remarks IS 'Keterangan';
+COMMENT ON COLUMN contract_item.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN contract_item.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
--- [2026.10.1] Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm.
+-- Syarat Kontrak
+-- Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm.
 -- 11).
--- Baris lampiran wajib adalah separuh CHECKLIST GABUNGAN; separuh lainnya evidence teknis milik Network Engineer (hlm.
--- 15).
+-- Baris lampiran wajib adalah separuh checklist gabungan BAST.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS contract_requirement (
     id                         bigserial PRIMARY KEY,
@@ -135,19 +204,31 @@ CREATE TABLE IF NOT EXISTS contract_requirement (
     requirement_type           text NOT NULL,
     requirement_text           text NOT NULL,
     clause_ref                 text,
+    evidence_page              integer,
     evidence_quote             text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
     UNIQUE (contract_id, line_no),
     CONSTRAINT contract_requirement_line_no_check CHECK (line_no > 0),
-    CONSTRAINT contract_requirement_requirement_type_valid CHECK (requirement_type IN ('mandatory_attachment', 'handover_condition', 'partial_delivery'))
+    CONSTRAINT contract_requirement_requirement_type_valid CHECK (requirement_type IN ('lampiran_wajib', 'syarat_serah_terima', 'boleh_parsial'))
 );
 CREATE INDEX IF NOT EXISTS idx_contract_requirement_contract_id ON contract_requirement(contract_id);
 DROP TRIGGER IF EXISTS trg_contract_requirement_updated_at ON contract_requirement;
 CREATE TRIGGER trg_contract_requirement_updated_at BEFORE UPDATE ON contract_requirement
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE contract_requirement IS 'Syarat Kontrak -- Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST.';
+COMMENT ON COLUMN contract_requirement.contract_id IS 'ID Kontrak';
+COMMENT ON COLUMN contract_requirement.line_no IS 'No Urut';
+COMMENT ON COLUMN contract_requirement.requirement_type IS 'Jenis Syarat -- lampiran wajib / syarat serah terima / boleh parsial';
+COMMENT ON COLUMN contract_requirement.requirement_text IS 'Isi Syarat -- mis. ''Berita Acara Uji Terima''';
+COMMENT ON COLUMN contract_requirement.clause_ref IS 'Pasal Rujukan -- mis. ''Pasal 9 ayat 2''';
+COMMENT ON COLUMN contract_requirement.evidence_page IS 'Halaman -- halaman tempat syarat ini ditemukan';
+COMMENT ON COLUMN contract_requirement.evidence_quote IS 'Kutipan Dokumen -- kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)';
+COMMENT ON COLUMN contract_requirement.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN contract_requirement.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
--- SPH vendor (rantai hulu) -- lahir DARI kebutuhan kontrak, bukan dasar kontrak.
+-- SPH Vendor
+-- Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS sph (
     id                         bigserial PRIMARY KEY,
@@ -177,15 +258,35 @@ CREATE TABLE IF NOT EXISTS sph (
 DROP TRIGGER IF EXISTS trg_sph_updated_at ON sph;
 CREATE TRIGGER trg_sph_updated_at BEFORE UPDATE ON sph
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE sph IS 'SPH Vendor -- Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak.';
+COMMENT ON COLUMN sph.document_id IS 'ID Dokumen';
+COMMENT ON COLUMN sph.mybhakti_project_ref IS 'Rujukan Proyek MyBhakti -- diisi n8n';
+COMMENT ON COLUMN sph.mybhakti_vendor_ref IS 'Rujukan Vendor MyBhakti -- diisi n8n';
+COMMENT ON COLUMN sph.sph_number IS 'Nomor SPH';
+COMMENT ON COLUMN sph.sph_date_text IS 'Tanggal SPH Tertulis';
+COMMENT ON COLUMN sph.sph_date IS 'Tanggal SPH';
+COMMENT ON COLUMN sph.project_name IS 'Perihal -- perihal / nama pekerjaan yang ditawarkan';
+COMMENT ON COLUMN sph.client_name IS 'Ditujukan Kepada -- instansi yang dituju surat';
+COMMENT ON COLUMN sph.vendor_name IS 'Nama Vendor -- penerbit SPH seperti tertulis';
+COMMENT ON COLUMN sph.vendor_npwp IS 'NPWP Vendor';
+COMMENT ON COLUMN sph.subtotal_value IS 'Subtotal';
+COMMENT ON COLUMN sph.vat_percentage IS 'Persentase PPN -- apa adanya di dokumen';
+COMMENT ON COLUMN sph.vat_value IS 'Nilai PPN';
+COMMENT ON COLUMN sph.total_price IS 'Total Penawaran -- grand total';
+COMMENT ON COLUMN sph.validity_text IS 'Masa Berlaku -- masa berlaku penawaran';
+COMMENT ON COLUMN sph.payment_mechanism IS 'Cara Pembayaran';
+COMMENT ON COLUMN sph.currency IS 'Mata Uang';
+COMMENT ON COLUMN sph.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN sph.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
+-- Rincian SPH
 -- Baris penawaran vendor.
--- Beberapa vendor menawar item kontrak yang sama -> dibandingkan lewat contract_item_id.
+-- Relasi ke barang yang dibeli (procurement item) untuk tabel banding harga dirancang di Bulan 5 -- belum ada di sini.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS sph_item (
     id                         bigserial PRIMARY KEY,
     sph_id                     integer NOT NULL REFERENCES sph(id) ON DELETE CASCADE,
     line_no                    integer NOT NULL,
-    contract_item_id           integer REFERENCES contract_item(id) ON DELETE RESTRICT,
     category                   text,
     description                text NOT NULL,
     specification              text,
@@ -206,189 +307,30 @@ CREATE TABLE IF NOT EXISTS sph_item (
     CONSTRAINT sph_item_line_total_check CHECK (line_total >= 0)
 );
 CREATE INDEX IF NOT EXISTS idx_sph_item_sph_id ON sph_item(sph_id);
-CREATE INDEX IF NOT EXISTS idx_sph_item_contract_item_id ON sph_item(contract_item_id);
 DROP TRIGGER IF EXISTS trg_sph_item_updated_at ON sph_item;
 CREATE TRIGGER trg_sph_item_updated_at BEFORE UPDATE ON sph_item
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE sph_item IS 'Rincian SPH -- Baris penawaran vendor. Relasi ke barang yang dibeli (procurement item) untuk tabel banding harga dirancang di Bulan 5 -- belum ada di sini.';
+COMMENT ON COLUMN sph_item.sph_id IS 'ID SPH';
+COMMENT ON COLUMN sph_item.line_no IS 'No Urut -- urutan baca, bukan kolom ''No'' di dokumen';
+COMMENT ON COLUMN sph_item.category IS 'Kelompok';
+COMMENT ON COLUMN sph_item.description IS 'Uraian';
+COMMENT ON COLUMN sph_item.specification IS 'Spesifikasi';
+COMMENT ON COLUMN sph_item.brand IS 'Merek';
+COMMENT ON COLUMN sph_item.part_number IS 'Nomor Part';
+COMMENT ON COLUMN sph_item.quantity IS 'Volume';
+COMMENT ON COLUMN sph_item.unit IS 'Satuan';
+COMMENT ON COLUMN sph_item.period IS 'Periode';
+COMMENT ON COLUMN sph_item.unit_price IS 'Harga Satuan -- selalu dikonfirmasi PM (hlm. 20)';
+COMMENT ON COLUMN sph_item.line_total IS 'Jumlah Harga';
+COMMENT ON COLUMN sph_item.remarks IS 'Keterangan';
+COMMENT ON COLUMN sph_item.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN sph_item.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
--- BAST (hasil ekstraksi atau hasil generate).
--- Pihak & nilai BAST pelanggan dibaca dari kontrak lewat contract_id.
--- Kolom di sini hanya butir yang selalu/hampir selalu ada.
--- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
-CREATE TABLE IF NOT EXISTS bast (
-    id                         bigserial PRIMARY KEY,
-    document_id                integer NOT NULL UNIQUE REFERENCES document(id) ON DELETE CASCADE,
-    direction                  text NOT NULL,
-    contract_id                integer REFERENCES contract(id) ON DELETE RESTRICT,
-    mybhakti_po_ref            text,
-    bast_number_customer       text,
-    bast_number_internal       text,
-    handover_date_text         text,
-    handover_date              date,
-    handover_city              text,
-    work_title                 text NOT NULL,
-    basis_doc_type             text,
-    basis_doc_number           text,
-    basis_doc_date_text        text,
-    basis_doc_date             date,
-    basis_doc_value            numeric(18,2),
-    basis_doc_value_vat        text,
-    currency                   char(3) NOT NULL DEFAULT 'IDR',
-    acceptance_statement       text,
-    created_at                 timestamptz NOT NULL DEFAULT now(),
-    updated_at                 timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT bast_direction_valid CHECK (direction IN ('customer', 'vendor', 'unknown')),
-    CONSTRAINT bast_basis_doc_type_valid CHECK (basis_doc_type IN ('contract', 'pks', 'spk', 'order_note', 'purchase_order', 'other')),
-    CONSTRAINT bast_basis_doc_value_check CHECK (basis_doc_value >= 0),
-    CONSTRAINT bast_basis_doc_value_vat_valid CHECK (basis_doc_value_vat IN ('included', 'excluded', 'unstated'))
-);
-CREATE INDEX IF NOT EXISTS idx_bast_contract_id ON bast(contract_id);
-DROP TRIGGER IF EXISTS trg_bast_updated_at ON bast;
-CREATE TRIGGER trg_bast_updated_at BEFORE UPDATE ON bast
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- Tepat 2 baris per BAST.
--- Cuplikan saat penandatanganan -- jabatan berubah, dokumen yang sudah diteken tidak boleh ikut berubah.
--- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
-CREATE TABLE IF NOT EXISTS bast_party (
-    id                         bigserial PRIMARY KEY,
-    bast_id                    integer NOT NULL REFERENCES bast(id) ON DELETE CASCADE,
-    role                       text NOT NULL,
-    org_name_text              text NOT NULL,
-    signer_name                text NOT NULL,
-    signer_title               text,
-    org_address_text           text,
-    mybhakti_party_ref         text,
-    created_at                 timestamptz NOT NULL DEFAULT now(),
-    updated_at                 timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (bast_id, role),
-    CONSTRAINT bast_party_role_valid CHECK (role IN ('handover', 'receiver'))
-);
-CREATE INDEX IF NOT EXISTS idx_bast_party_bast_id ON bast_party(bast_id);
-DROP TRIGGER IF EXISTS trg_bast_party_updated_at ON bast_party;
-CREATE TRIGGER trg_bast_party_updated_at BEFORE UPDATE ON bast_party
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- Baris serah terima.
--- Kolom [2026.10.1] adalah informasi yang baru ada di tahap serah terima (tanggal aktif, AO/SID, lokasi).
--- Harga boleh NULL: format kampus/vendor/instansi tidak memuatnya.
--- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
-CREATE TABLE IF NOT EXISTS bast_item (
-    id                         bigserial PRIMARY KEY,
-    bast_id                    integer NOT NULL REFERENCES bast(id) ON DELETE CASCADE,
-    line_no                    integer NOT NULL,
-    contract_item_id           integer REFERENCES contract_item(id) ON DELETE RESTRICT,
-    description                text NOT NULL,
-    quantity                   numeric(18,2),
-    unit                       text,
-    unit_price                 numeric(18,2),
-    line_total                 numeric(18,2),
-    test_result                text,
-    activation_date_text       text,
-    activation_date            date,
-    service_order_ref          text,
-    service_id                 text,
-    location                   text,
-    remarks                    text,
-    created_at                 timestamptz NOT NULL DEFAULT now(),
-    updated_at                 timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (bast_id, line_no),
-    CONSTRAINT bast_item_line_no_check CHECK (line_no > 0),
-    CONSTRAINT bast_item_quantity_check CHECK (quantity >= 0),
-    CONSTRAINT bast_item_unit_price_check CHECK (unit_price >= 0),
-    CONSTRAINT bast_item_line_total_check CHECK (line_total >= 0)
-);
-CREATE INDEX IF NOT EXISTS idx_bast_item_bast_id ON bast_item(bast_id);
-CREATE INDEX IF NOT EXISTS idx_bast_item_contract_item_id ON bast_item(contract_item_id);
-DROP TRIGGER IF EXISTS trg_bast_item_updated_at ON bast_item;
-CREATE TRIGGER trg_bast_item_updated_at BEFORE UPDATE ON bast_item
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- Fakta tambahan BAST sebagai BARIS.
--- Fakta baru = nilai condition_type baru, bukan kolom baru.
--- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
-CREATE TABLE IF NOT EXISTS bast_condition (
-    id                         bigserial PRIMARY KEY,
-    bast_id                    integer NOT NULL REFERENCES bast(id) ON DELETE CASCADE,
-    condition_type             text NOT NULL,
-    value_text                 text,
-    value_number               numeric(18,2),
-    value_date                 date,
-    created_at                 timestamptz NOT NULL DEFAULT now(),
-    updated_at                 timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT bast_condition_condition_type_valid CHECK (condition_type IN ('progress_percent', 'service_active_since', 'acceptance_test_ref', 'delivery_reconciliation_ref', 'supporting_document', 'amount_in_words'))
-);
-CREATE INDEX IF NOT EXISTS idx_bast_condition_bast_id ON bast_condition(bast_id);
-DROP TRIGGER IF EXISTS trg_bast_condition_updated_at ON bast_condition;
-CREATE TRIGGER trg_bast_condition_updated_at BEFORE UPDATE ON bast_condition
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- Draf BAST pelanggan dari kontrak terverifikasi.
--- Nomor dari numbering service, render oleh dol-render (RPA), lampiran oleh compiler BAST (Network).
--- Ditulis oleh: mesin (pipeline) · pemilik: RPA Engineer
--- Kolom yang HANYA diisi PM: approved_by, approved_at
-CREATE TABLE IF NOT EXISTS bast_draft (
-    id                         bigserial PRIMARY KEY,
-    contract_id                integer NOT NULL REFERENCES contract(id) ON DELETE CASCADE,
-    draft_bast_number          text,
-    work_title                 text NOT NULL,
-    handover_date_text         text,
-    handover_date              date,
-    handover_city              text,
-    status                     text NOT NULL,
-    template_name              text,
-    acceptance_statement       text,
-    generated_doc_url          text,
-    generated_bast_id          integer REFERENCES bast(id) ON DELETE RESTRICT,
-    approved_by                text,
-    approved_at                timestamptz,
-    created_at                 timestamptz NOT NULL DEFAULT now(),
-    updated_at                 timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT bast_draft_status_valid CHECK (status IN ('draft', 'pending_review', 'approved', 'generated', 'rejected'))
-);
-CREATE INDEX IF NOT EXISTS idx_bast_draft_contract_id ON bast_draft(contract_id);
-CREATE INDEX IF NOT EXISTS idx_bast_draft_generated_bast_id ON bast_draft(generated_bast_id);
-DROP TRIGGER IF EXISTS trg_bast_draft_updated_at ON bast_draft;
-CREATE TRIGGER trg_bast_draft_updated_at BEFORE UPDATE ON bast_draft
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- [2026.10.1] USULAN untuk disepakati dengan Network Engineer (wilayah dol-odk & dol-bast-compiler, hlm.
--- 15).
--- Foto masuk lewat n8n dari ODK Central SETELAH lolos pemeriksaan otomatis (GPS ada, dalam radius lokasi, dalam masa kontrak); PM lalu menyetujui/menolak di NocoDB.
--- Lampiran BAST hanya memakai review_status=approved.
--- Ditulis oleh: mesin (pipeline) · pemilik: Network Engineer
--- Kolom yang HANYA diisi PM: review_status, reviewed_by, reviewed_at, review_note
-CREATE TABLE IF NOT EXISTS evidence_photo (
-    id                         bigserial PRIMARY KEY,
-    odk_instance_id            text NOT NULL UNIQUE,
-    contract_item_id           integer NOT NULL REFERENCES contract_item(id) ON DELETE RESTRICT,
-    requirement_id             integer REFERENCES contract_requirement(id) ON DELETE RESTRICT,
-    component_label            text,
-    photo_type                 text NOT NULL,
-    serial_number              text,
-    photo_url                  text NOT NULL,
-    taken_at                   timestamptz NOT NULL,
-    gps_lat                    numeric(9,6),
-    gps_lon                    numeric(9,6),
-    auto_check_notes           text,
-    review_status              text NOT NULL DEFAULT 'pending',
-    reviewed_by                text,
-    reviewed_at                timestamptz,
-    review_note                text,
-    created_at                 timestamptz NOT NULL DEFAULT now(),
-    updated_at                 timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT evidence_photo_photo_type_valid CHECK (photo_type IN ('item', 'serial_label', 'installation', 'screenshot')),
-    CONSTRAINT evidence_photo_review_status_valid CHECK (review_status IN ('pending', 'approved', 'rejected'))
-);
-CREATE INDEX IF NOT EXISTS idx_evidence_photo_contract_item_id ON evidence_photo(contract_item_id);
-CREATE INDEX IF NOT EXISTS idx_evidence_photo_requirement_id ON evidence_photo(requirement_id);
-DROP TRIGGER IF EXISTS trg_evidence_photo_updated_at ON evidence_photo;
-CREATE TRIGGER trg_evidence_photo_updated_at BEFORE UPDATE ON evidence_photo
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- Satu baris per field: nilai ekstraksi + skor + bukti.
+-- Hasil Ekstraksi
+-- Satu baris per field: nilai terbaca + bukti.
 -- Antrean kerja PM.
--- Ditulis mesin saja; nilai terbaru per field.
+-- Ditulis mesin saja; dokumen yang sudah mulai diperiksa PM tidak ditimpa otomatis.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS extracted_field (
     id                         bigserial PRIMARY KEY,
@@ -402,16 +344,28 @@ CREATE TABLE IF NOT EXISTS extracted_field (
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
     UNIQUE (document_id, field_path),
-    CONSTRAINT extracted_field_system_status_valid CHECK (system_status IN ('auto_verified', 'auto_accepted', 'review_required', 'unsupported', 'conflict', 'missing'))
+    CONSTRAINT extracted_field_system_status_valid CHECK (system_status IN ('bukti_kuat', 'bukti_cukup', 'perlu_dicek', 'tidak_ada_di_dokumen', 'bertentangan', 'kosong'))
 );
 CREATE INDEX IF NOT EXISTS idx_extracted_field_document_id ON extracted_field(document_id);
 DROP TRIGGER IF EXISTS trg_extracted_field_updated_at ON extracted_field;
 CREATE TRIGGER trg_extracted_field_updated_at BEFORE UPDATE ON extracted_field
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE extracted_field IS 'Hasil Ekstraksi -- Satu baris per field: nilai terbaca + bukti. Antrean kerja PM. Ditulis mesin saja; dokumen yang sudah mulai diperiksa PM tidak ditimpa otomatis.';
+COMMENT ON COLUMN extracted_field.document_id IS 'ID Dokumen';
+COMMENT ON COLUMN extracted_field.field_path IS 'Nama Field -- mis. ''Nomor Kontrak Kerja'' atau ''List Item/Barang[0].Harga Satuan''';
+COMMENT ON COLUMN extracted_field.ai_value_text IS 'Nilai Terbaca Sistem';
+COMMENT ON COLUMN extracted_field.evidence_page IS 'Halaman Bukti -- dihitung sistem, bukan ditulis LLM';
+COMMENT ON COLUMN extracted_field.evidence_quote IS 'Kutipan Bukti -- potongan teks dokumen tempat nilai ditemukan';
+COMMENT ON COLUMN extracted_field.evidence_score IS 'Skor Bukti -- 0-1: seberapa persis nilai ditemukan di teks dokumen';
+COMMENT ON COLUMN extracted_field.system_status IS 'Status Bukti -- saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar';
+COMMENT ON COLUMN extracted_field.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN extracted_field.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
+-- Keputusan PM
 -- Keputusan PM per field (hlm.
 -- 11 & 20).
 -- Pipeline tidak pernah menulis ke sini.
+-- Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini.
 -- Ditulis oleh: MANUSIA (PM) · pemilik: PM
 CREATE TABLE IF NOT EXISTS field_review (
     id                         bigserial PRIMARY KEY,
@@ -426,16 +380,28 @@ CREATE TABLE IF NOT EXISTS field_review (
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
     UNIQUE (document_id, field_path),
-    CONSTRAINT field_review_decision_valid CHECK (decision IN ('confirmed', 'corrected', 'rejected'))
+    CONSTRAINT field_review_decision_valid CHECK (decision IN ('benar', 'dikoreksi', 'ditolak'))
 );
 CREATE INDEX IF NOT EXISTS idx_field_review_document_id ON field_review(document_id);
 DROP TRIGGER IF EXISTS trg_field_review_updated_at ON field_review;
 CREATE TRIGGER trg_field_review_updated_at BEFORE UPDATE ON field_review
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE field_review IS 'Keputusan PM -- Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini.';
+COMMENT ON COLUMN field_review.document_id IS 'ID Dokumen -- dokumen dengan keputusan PM tidak boleh terhapus diam-diam';
+COMMENT ON COLUMN field_review.field_path IS 'Nama Field';
+COMMENT ON COLUMN field_review.reviewed_ai_value_text IS 'Nilai Sistem Saat Diperiksa -- nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru';
+COMMENT ON COLUMN field_review.decision IS 'Keputusan';
+COMMENT ON COLUMN field_review.final_value_text IS 'Nilai Final -- wajib diisi bila dikoreksi';
+COMMENT ON COLUMN field_review.reviewed_by IS 'Diperiksa Oleh';
+COMMENT ON COLUMN field_review.reviewed_at IS 'Waktu Diperiksa';
+COMMENT ON COLUMN field_review.reviewer_note IS 'Catatan PM';
+COMMENT ON COLUMN field_review.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN field_review.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
+-- Riwayat Pemrosesan
 -- Jejak tiap pemrosesan -- dasar bukti 'Terukur' (hlm.
 -- 21).
--- Hanya di PostgreSQL: NocoDB hanya memuat nilai ekstraksi + confidence, bukan metadata teknis AI.
+-- Hanya di PostgreSQL.
 -- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
 CREATE TABLE IF NOT EXISTS extraction_run (
     id                         bigserial PRIMARY KEY,
@@ -456,29 +422,25 @@ CREATE INDEX IF NOT EXISTS idx_extraction_run_document_id ON extraction_run(docu
 DROP TRIGGER IF EXISTS trg_extraction_run_updated_at ON extraction_run;
 CREATE TRIGGER trg_extraction_run_updated_at BEFORE UPDATE ON extraction_run
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE extraction_run IS 'Riwayat Pemrosesan -- Jejak tiap pemrosesan -- dasar bukti ''Terukur'' (hlm. 21). Hanya di PostgreSQL.';
+COMMENT ON COLUMN extraction_run.document_id IS 'ID Dokumen';
+COMMENT ON COLUMN extraction_run.ocr_engine IS 'Mesin OCR';
+COMMENT ON COLUMN extraction_run.llm_model IS 'Model LLM';
+COMMENT ON COLUMN extraction_run.prompt_version IS 'Versi Prompt';
+COMMENT ON COLUMN extraction_run.schema_version IS 'Versi Skema';
+COMMENT ON COLUMN extraction_run.llm_call_count IS 'Jumlah Panggilan LLM';
+COMMENT ON COLUMN extraction_run.parse_seconds IS 'Detik Pembacaan';
+COMMENT ON COLUMN extraction_run.extract_seconds IS 'Detik Ekstraksi';
+COMMENT ON COLUMN extraction_run.validation_status IS 'Status Validasi';
+COMMENT ON COLUMN extraction_run.started_at IS 'Mulai';
+COMMENT ON COLUMN extraction_run.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN extraction_run.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
+-- ---------------------------------------------------------------- verifikasi PM
 -- Status verifikasi TIDAK disimpan sebagai kolom: ia turunan dari field_review.
 -- Menyimpannya berarti ada dua sumber kebenaran yang bisa berbeda.
-CREATE OR REPLACE VIEW document_review_status AS
-SELECT
-    d.id                                            AS document_id,
-    d.source_filename,
-    d.doc_type,
-    count(ef.id)                                    AS field_count,
-    count(fr.id) FILTER (WHERE fr.decision = 'confirmed') AS confirmed_count,
-    count(fr.id) FILTER (WHERE fr.decision = 'corrected') AS corrected_count,
-    CASE
-        WHEN count(ef.id) = 0 THEN 'no_fields'
-        WHEN count(fr.id) = 0 THEN 'draft_ai'
-        WHEN count(fr.id) < count(ef.id) THEN 'in_review'
-        ELSE 'verified_by_pm'
-    END                                             AS review_status
-FROM document d
-LEFT JOIN extracted_field ef ON ef.document_id = d.id
-LEFT JOIN field_review   fr ON fr.document_id = d.id AND fr.field_path = ef.field_path
-GROUP BY d.id, d.source_filename, d.doc_type;
 
--- Field yang konfirmasinya basi: nilai AI berubah setelah PM memutuskan.
+-- Keputusan PM yang basi: nilai sistem berubah setelah PM memutuskan.
 CREATE OR REPLACE VIEW field_review_stale AS
 SELECT fr.document_id, fr.field_path,
        fr.reviewed_ai_value_text AS value_saat_dikonfirmasi,
@@ -489,43 +451,45 @@ JOIN extracted_field ef
   ON ef.document_id = fr.document_id AND ef.field_path = fr.field_path
 WHERE ef.ai_value_text IS DISTINCT FROM fr.reviewed_ai_value_text;
 
--- ---------------------------------------------------------------- penyusunan BAST
--- Tiga "resep" siap pakai untuk render BAST (RPA) dan compiler lampiran (Network).
--- Semuanya dibaca dari kontrak lewat relasi -- tidak ada data yang disalin.
+-- Status per dokumen. Keputusan yang basi TIDAK dihitung: dokumen yang nilainya berubah
+-- setelah dikonfirmasi kembali menjadi 'sedang_direview', bukan tetap 'terverifikasi_pm'.
+CREATE OR REPLACE VIEW document_review_status AS
+SELECT
+    d.id                                            AS document_id,
+    d.source_filename,
+    d.doc_type,
+    count(ef.id)                                    AS field_count,
+    count(fr.id) FILTER (WHERE fr.decision = 'benar'
+                         AND ef.ai_value_text IS NOT DISTINCT FROM fr.reviewed_ai_value_text)
+                                                    AS confirmed_count,
+    count(fr.id) FILTER (WHERE fr.decision = 'dikoreksi'
+                         AND ef.ai_value_text IS NOT DISTINCT FROM fr.reviewed_ai_value_text)
+                                                    AS corrected_count,
+    count(fr.id) FILTER (WHERE ef.ai_value_text IS DISTINCT FROM fr.reviewed_ai_value_text)
+                                                    AS stale_count,
+    CASE
+        WHEN count(ef.id) = 0 THEN 'belum_ada_field'
+        WHEN count(fr.id) = 0 THEN 'draf_sistem'
+        WHEN count(fr.id) FILTER (WHERE ef.ai_value_text IS NOT DISTINCT FROM
+                                        fr.reviewed_ai_value_text) < count(ef.id)
+             THEN 'sedang_direview'
+        ELSE 'terverifikasi_pm'
+    END                                             AS review_status
+FROM document d
+LEFT JOIN extracted_field ef ON ef.document_id = d.id
+LEFT JOIN field_review   fr ON fr.document_id = d.id AND fr.field_path = ef.field_path
+GROUP BY d.id, d.source_filename, d.doc_type;
 
--- Rincian BAST: uraian, spesifikasi, jumlah, harga DARI KONTRAK bila baris BAST menunjuk
--- contract_item; informasi serah terima (tanggal aktif, AO/SID, lokasi) dari bast_item.
-CREATE OR REPLACE VIEW bast_rincian AS
-SELECT bi.bast_id, b.contract_id, bi.line_no,
-       COALESCE(ci.description, bi.description) AS description,
-       ci.specification,
-       COALESCE(ci.quantity, bi.quantity)       AS quantity,
-       COALESCE(ci.unit, bi.unit)               AS unit,
-       COALESCE(ci.unit_price, bi.unit_price)   AS unit_price,
-       COALESCE(ci.line_total, bi.line_total)   AS line_total,
-       bi.activation_date, bi.service_order_ref, bi.service_id, bi.location, bi.test_result
-FROM bast_item bi
-JOIN bast b                ON b.id = bi.bast_id
-LEFT JOIN contract_item ci ON ci.id = bi.contract_item_id;
-
--- Lampiran evidence: HANYA foto yang sudah disetujui PM, dikelompokkan per baris BoQ.
-CREATE OR REPLACE VIEW evidence_siap_lampiran AS
-SELECT ci.contract_id, ci.line_no, ci.description AS item_description,
-       ep.component_label, ep.photo_type, ep.serial_number,
-       ep.photo_url, ep.taken_at, ep.gps_lat, ep.gps_lon
-FROM evidence_photo ep
-JOIN contract_item ci ON ci.id = ep.contract_item_id
-WHERE ep.review_status = 'approved';
-
--- Checklist gabungan (hlm. 15): tiap lampiran wajib kontrak + status buktinya.
--- BAST pelanggan baru aman diajukan bila semua baris berstatus 'terpenuhi'.
-CREATE OR REPLACE VIEW checklist_gabungan AS
-SELECT cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref,
-       count(ep.id) FILTER (WHERE ep.review_status = 'approved') AS bukti_disetujui,
-       count(ep.id) FILTER (WHERE ep.review_status = 'pending')  AS bukti_menunggu,
-       CASE WHEN count(ep.id) FILTER (WHERE ep.review_status = 'approved') > 0
-            THEN 'terpenuhi' ELSE 'belum' END                     AS status
-FROM contract_requirement cr
-LEFT JOIN evidence_photo ep ON ep.requirement_id = cr.id
-WHERE cr.requirement_type = 'mandatory_attachment'
-GROUP BY cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref;
+-- Satu-satunya sumber nilai untuk dokumen hilir (mis. penyusunan BAST): hanya field yang
+-- sudah diputuskan PM dan keputusannya belum basi. Field yang ditolak atau belum diperiksa
+-- TIDAK muncul -- konsumen harus menganggapnya kosong, bukan memakai nilai sistem.
+CREATE OR REPLACE VIEW nilai_terverifikasi AS
+SELECT fr.document_id, fr.field_path,
+       CASE fr.decision WHEN 'dikoreksi' THEN fr.final_value_text
+                        ELSE ef.ai_value_text END AS nilai,
+       fr.decision, fr.reviewed_by, fr.reviewed_at
+FROM field_review fr
+JOIN extracted_field ef
+  ON ef.document_id = fr.document_id AND ef.field_path = fr.field_path
+WHERE fr.decision IN ('benar', 'dikoreksi')
+  AND ef.ai_value_text IS NOT DISTINCT FROM fr.reviewed_ai_value_text;

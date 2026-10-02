@@ -10,6 +10,7 @@ Yang sengaja ikut digambar karena itu keputusan desain, bukan detail:
 - **Penulis tabel.** Tabel milik manusia (`field_review`) diberi warna berbeda; pipeline
   tidak pernah menulis ke sana.
 - **Tabel di luar NocoDB.** `extraction_run` hanya hidup di PostgreSQL.
+- **Tabel usulan (ditunda).** Warna kuning: belum disepakati tim, belum dibuat di NocoDB.
 - **Aksi ON DELETE.** RESTRICT menandai baris yang tidak boleh ikut terhapus diam-diam.
 - **Kolom `*_ref` MyBhakti** tampil sebagai kolom biasa, TANPA garis relasi: sengaja bukan FK.
 """
@@ -23,6 +24,7 @@ from dol_schema.model import ALL_TABLES, DOMAINS, OWNERS, SCHEMA_VERSION, Column
 # Warna header = PEMILIK tabel (briefing hlm. 12-15).
 _OWNER_COLOR = {"ai": "#3498DB", "network": "#8E44AD", "rpa": "#27AE60", "pm": "#E67E22"}
 _COLOR_INTERNAL = "#7F8C8D"
+_COLOR_DITUNDA = "#F1C40F"
 
 
 def _q(text: str) -> str:
@@ -44,7 +46,7 @@ def _column_line(t: Table, c: Column) -> str:
         settings.append("default: `now()`")
     elif c.default:
         settings.append(f"default: {c.default}")
-    note = c.note
+    note = f"{c.label}. {c.note}".strip() if c.note else c.label
     if c.written_by == "human":
         note = f"[DIISI PM] {note}".strip()
     if c.check:
@@ -59,11 +61,16 @@ def _column_line(t: Table, c: Column) -> str:
 def _table_block(t: Table) -> str:
     if t.written_by == "human":
         penulis = "MANUSIA (PM) -- pipeline tidak pernah menulis ke sini"
+    elif t.status == "ditunda":
+        penulis = "USULAN, belum dibuat di NocoDB"
     elif not t.nocodb:
         penulis = "mesin -- hanya PostgreSQL, TIDAK dikirim ke NocoDB"
     else:
         penulis = "mesin (pipeline)"
-    color = _OWNER_COLOR[t.owner] if t.nocodb else _COLOR_INTERNAL
+    if t.status == "ditunda":
+        color = _COLOR_DITUNDA
+    else:
+        color = _OWNER_COLOR[t.owner] if t.nocodb else _COLOR_INTERNAL
     penulis = f"{penulis}. Pemilik: {OWNERS[t.owner]}"
     lines = [f"Table {t.name} [headercolor: {color}] {{",
              "  id bigint [pk, increment]"]
@@ -75,7 +82,7 @@ def _table_block(t: Table) -> str:
             lines.append(f"    ({', '.join(cols)}) [unique]")
         lines.append("  }")
     lines.append("")
-    lines.append(f"  Note: {_q((t.note + ' ' if t.note else '') + 'Ditulis oleh: ' + penulis)}")
+    lines.append(f"  Note: {_q(t.label + '. ' + (t.note + ' ' if t.note else '') + 'Ditulis oleh: ' + penulis)}")
     lines.append("}")
     return "\n".join(lines)
 
@@ -113,7 +120,8 @@ def _groups() -> List[str]:
 
 _PROJECT_NOTE = (
     "Warna header = pemilik tabel: biru = AI Engineer, ungu = Network Engineer, hijau = RPA "
-    "Engineer, oranye = PM, abu-abu = hanya PostgreSQL (tidak dikirim ke NocoDB). Kolom "
+    "Engineer, oranye = PM, abu-abu = hanya PostgreSQL (tidak dikirim ke NocoDB), kuning = "
+    "usulan yang ditunda. Kolom "
     "bertanda [DIISI PM] hanya diubah PM. Kolom *_ref MyBhakti sengaja BUKAN foreign key "
     "(briefing hlm. 7)."
 )

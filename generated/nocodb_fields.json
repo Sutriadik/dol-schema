@@ -1,907 +1,668 @@
 {
-  "schema_version": "companion-2026.10.1",
+  "schema_version": "companion-2026.10.2",
   "tables": {
-    "document": [
-      {
-        "title": "content_hash",
-        "uidt": "SingleLineText",
-        "description": "sha1 isi berkas -- kunci idempotensi; proses ulang = UPDATE"
-      },
-      {
-        "title": "doc_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "contract",
-          "sph",
-          "bast"
-        ]
-      },
-      {
-        "title": "source_filename",
-        "uidt": "SingleLineText",
-        "pv": true
-      },
-      {
-        "title": "page_count",
-        "uidt": "Number"
-      },
-      {
-        "title": "markdown",
-        "uidt": "LongText",
-        "description": "markdown utuh; PM membaca tanpa membuka PDF"
-      },
-      {
-        "title": "validation_notes",
-        "uidt": "LongText",
-        "description": "[2026.10.1] peringatan tingkat dokumen untuk PM, mis. salinan ganda atau jumlah item tidak sama dengan total"
-      }
-    ],
-    "contract": [
-      {
-        "title": "document_id",
-        "uidt": "Number",
-        "description": "UNIQUE -> 1:1 dengan document"
-      },
-      {
-        "title": "mybhakti_project_ref",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] proyek/deal di MyBhakti, diisi n8n -- kunci pengikat semua dokumen satu proyek; SENGAJA bukan FK (hlm. 7)"
-      },
-      {
-        "title": "contract_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "nota_pesanan",
-          "surat_pesanan",
-          "spk",
-          "kontrak_kerja_sama",
-          "pks",
-          "other"
-        ],
-        "description": "[2026.10.1] bentuk dokumen dasar: nota pesanan, surat pesanan, SPK, kontrak kerja sama, PKS"
-      },
-      {
-        "title": "contract_number",
-        "uidt": "SingleLineText",
-        "description": "nomor kontrak resmi / SPK / PKS",
-        "pv": true
-      },
-      {
-        "title": "contract_number_internal",
-        "uidt": "SingleLineText",
-        "description": "nomor registrasi internal BUT"
-      },
-      {
-        "title": "work_title",
-        "uidt": "LongText",
-        "description": "judul pengadaan / lingkup pekerjaan"
-      },
-      {
-        "title": "contract_date_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "contract_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "start_date_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "start_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "end_date_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "end_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "duration_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "contract_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "subtotal_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "vat_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "vat_percentage",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "currency",
-        "uidt": "SingleLineText",
-        "description": "default IDR"
-      },
-      {
-        "title": "payment_mechanism",
-        "uidt": "LongText"
-      },
-      {
-        "title": "penalty_terms",
-        "uidt": "LongText"
-      },
-      {
-        "title": "bast_terms",
-        "uidt": "LongText"
-      },
-      {
-        "title": "bank_name",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "bank_account_number",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "bank_account_name",
-        "uidt": "SingleLineText"
-      }
-    ],
-    "contract_party": [
-      {
-        "title": "contract_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "role",
-        "uidt": "SingleSelect",
-        "options": [
-          "first_party",
-          "second_party",
-          "client",
-          "contractor"
-        ],
-        "description": "first_party/client (pemberi kerja) vs second_party/contractor (pelaksana)"
-      },
-      {
-        "title": "org_name_text",
-        "uidt": "SingleLineText",
-        "pv": true
-      },
-      {
-        "title": "signer_name",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "signer_title",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "org_address_text",
-        "uidt": "LongText"
-      },
-      {
-        "title": "npwp",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "mybhakti_party_ref",
-        "uidt": "SingleLineText"
-      }
-    ],
-    "contract_item": [
-      {
-        "title": "contract_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "line_no",
-        "uidt": "Number"
-      },
-      {
-        "title": "category",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "description",
-        "uidt": "LongText",
-        "pv": true
-      },
-      {
-        "title": "specification",
-        "uidt": "LongText"
-      },
-      {
-        "title": "quantity",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "unit",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "period",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "unit_price",
-        "uidt": "Currency",
-        "description": "selalu diverifikasi PM (hlm. 20)"
-      },
-      {
-        "title": "line_total",
-        "uidt": "Currency"
-      },
-      {
-        "title": "remarks",
-        "uidt": "LongText"
-      }
-    ],
-    "contract_requirement": [
-      {
-        "title": "contract_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "line_no",
-        "uidt": "Number"
-      },
-      {
-        "title": "requirement_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "mandatory_attachment",
-          "handover_condition",
-          "partial_delivery"
-        ],
-        "description": "lampiran wajib / syarat serah terima / boleh parsial"
-      },
-      {
-        "title": "requirement_text",
-        "uidt": "LongText",
-        "description": "mis. 'Berita Acara Uji Terima'",
-        "pv": true
-      },
-      {
-        "title": "clause_ref",
-        "uidt": "SingleLineText",
-        "description": "pasal rujukan, mis. 'Pasal 9 ayat 2'"
-      },
-      {
-        "title": "evidence_quote",
-        "uidt": "LongText",
-        "description": "kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)"
-      }
-    ],
-    "sph": [
-      {
-        "title": "document_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "mybhakti_project_ref",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] proyek yang pengadaannya ditawar; diisi n8n"
-      },
-      {
-        "title": "mybhakti_vendor_ref",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] vendor penerbit di MyBhakti; diisi n8n"
-      },
-      {
-        "title": "sph_number",
-        "uidt": "SingleLineText",
-        "pv": true
-      },
-      {
-        "title": "sph_date_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "sph_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "project_name",
-        "uidt": "LongText",
-        "description": "perihal / nama pekerjaan yang ditawarkan"
-      },
-      {
-        "title": "client_name",
-        "uidt": "SingleLineText",
-        "description": "instansi yang dituju surat"
-      },
-      {
-        "title": "vendor_name",
-        "uidt": "SingleLineText",
-        "description": "penerbit SPH seperti tertulis"
-      },
-      {
-        "title": "vendor_npwp",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "subtotal_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "vat_percentage",
-        "uidt": "SingleLineText",
-        "description": "apa adanya di dokumen; sering berupa frasa"
-      },
-      {
-        "title": "vat_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "total_price",
-        "uidt": "Currency",
-        "description": "grand total"
-      },
-      {
-        "title": "validity_text",
-        "uidt": "SingleLineText",
-        "description": "masa berlaku penawaran, mis. '30 hari'"
-      },
-      {
-        "title": "payment_mechanism",
-        "uidt": "LongText"
-      },
-      {
-        "title": "currency",
-        "uidt": "SingleLineText",
-        "description": "default IDR"
-      }
-    ],
-    "sph_item": [
-      {
-        "title": "sph_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "line_no",
-        "uidt": "Number"
-      },
-      {
-        "title": "contract_item_id",
-        "uidt": "Number",
-        "description": "[2026.10.1] item kontrak yang dipenuhi baris ini -- kunci price matching & tabel banding antar-vendor (Bulan 5)"
-      },
-      {
-        "title": "category",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "description",
-        "uidt": "LongText",
-        "pv": true
-      },
-      {
-        "title": "specification",
-        "uidt": "LongText"
-      },
-      {
-        "title": "brand",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "part_number",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "quantity",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "unit",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "period",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "unit_price",
-        "uidt": "Currency"
-      },
-      {
-        "title": "line_total",
-        "uidt": "Currency"
-      },
-      {
-        "title": "remarks",
-        "uidt": "LongText"
-      }
-    ],
-    "bast": [
-      {
-        "title": "document_id",
-        "uidt": "Number",
-        "description": "UNIQUE -> 1:1 dengan document"
-      },
-      {
-        "title": "direction",
-        "uidt": "SingleSelect",
-        "options": [
-          "customer",
-          "vendor",
-          "unknown"
-        ],
-        "description": "customer = kita->pelanggan (acuan: kontrak); vendor = vendor->kita (acuan: PO) -- hlm. 10"
-      },
-      {
-        "title": "contract_id",
-        "uidt": "Number",
-        "description": "hanya untuk direction=customer"
-      },
-      {
-        "title": "mybhakti_po_ref",
-        "uidt": "SingleLineText",
-        "description": "rujukan opak ke MyBhakti, diisi n8n -- SENGAJA bukan FK (hlm. 7)"
-      },
-      {
-        "title": "bast_number_customer",
-        "uidt": "SingleLineText",
-        "description": "nomor versi pelanggan",
-        "pv": true
-      },
-      {
-        "title": "bast_number_internal",
-        "uidt": "SingleLineText",
-        "description": "nomor versi BUT -- dari numbering service milik RPA (hlm. 20)"
-      },
-      {
-        "title": "handover_date_text",
-        "uidt": "SingleLineText",
-        "description": "apa adanya di dokumen"
-      },
-      {
-        "title": "handover_date",
-        "uidt": "Date",
-        "description": "hasil parse; NULL kalau gagal"
-      },
-      {
-        "title": "handover_city",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "work_title",
-        "uidt": "LongText"
-      },
-      {
-        "title": "basis_doc_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "contract",
-          "pks",
-          "spk",
-          "order_note",
-          "purchase_order",
-          "other"
-        ]
-      },
-      {
-        "title": "basis_doc_number",
-        "uidt": "SingleLineText",
-        "description": "seperti tercetak"
-      },
-      {
-        "title": "basis_doc_date_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "basis_doc_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "basis_doc_value",
-        "uidt": "Currency"
-      },
-      {
-        "title": "basis_doc_value_vat",
-        "uidt": "SingleSelect",
-        "options": [
-          "included",
-          "excluded",
-          "unstated"
-        ]
-      },
-      {
-        "title": "currency",
-        "uidt": "SingleLineText",
-        "description": "default IDR"
-      },
-      {
-        "title": "acceptance_statement",
-        "uidt": "LongText"
-      }
-    ],
-    "bast_party": [
-      {
-        "title": "bast_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "role",
-        "uidt": "SingleSelect",
-        "options": [
-          "handover",
-          "receiver"
-        ],
-        "description": "peran, BUKAN 'Pihak Pertama/Kedua' -- label itu terbalik antar-format"
-      },
-      {
-        "title": "org_name_text",
-        "uidt": "SingleLineText",
-        "description": "nama seperti ditandatangani",
-        "pv": true
-      },
-      {
-        "title": "signer_name",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "signer_title",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "org_address_text",
-        "uidt": "LongText"
-      },
-      {
-        "title": "mybhakti_party_ref",
-        "uidt": "SingleLineText",
-        "description": "opak, diisi n8n"
-      }
-    ],
-    "bast_item": [
-      {
-        "title": "bast_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "line_no",
-        "uidt": "Number"
-      },
-      {
-        "title": "contract_item_id",
-        "uidt": "Number",
-        "description": "[2026.10.1] baris BoQ kontrak yang diserahkan -- bila terisi, uraian & harga DIBACA dari contract_item, sehingga pasti sama dengan kontrak"
-      },
-      {
-        "title": "description",
-        "uidt": "LongText",
-        "pv": true
-      },
-      {
-        "title": "quantity",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "unit",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "unit_price",
-        "uidt": "Currency"
-      },
-      {
-        "title": "line_total",
-        "uidt": "Currency"
-      },
-      {
-        "title": "test_result",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "activation_date_text",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] 'Tanggal Aktif' apa adanya"
-      },
-      {
-        "title": "activation_date",
-        "uidt": "Date",
-        "description": "[2026.10.1] hasil parse"
-      },
-      {
-        "title": "service_order_ref",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] 'No. AO' layanan"
-      },
-      {
-        "title": "service_id",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] 'SID' layanan"
-      },
-      {
-        "title": "location",
-        "uidt": "SingleLineText",
-        "description": "[2026.10.1] lokasi pemasangan / layanan"
-      },
-      {
-        "title": "remarks",
-        "uidt": "LongText"
-      }
-    ],
-    "bast_condition": [
-      {
-        "title": "bast_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "condition_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "progress_percent",
-          "service_active_since",
-          "acceptance_test_ref",
-          "delivery_reconciliation_ref",
-          "supporting_document",
-          "amount_in_words"
-        ],
-        "pv": true
-      },
-      {
-        "title": "value_text",
-        "uidt": "LongText"
-      },
-      {
-        "title": "value_number",
-        "uidt": "Decimal"
-      },
-      {
-        "title": "value_date",
-        "uidt": "Date"
-      }
-    ],
-    "bast_draft": [
-      {
-        "title": "contract_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "draft_bast_number",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "work_title",
-        "uidt": "LongText",
-        "pv": true
-      },
-      {
-        "title": "handover_date_text",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "handover_date",
-        "uidt": "Date"
-      },
-      {
-        "title": "handover_city",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "status",
-        "uidt": "SingleSelect",
-        "options": [
-          "draft",
-          "pending_review",
-          "approved",
-          "generated",
-          "rejected"
-        ]
-      },
-      {
-        "title": "template_name",
-        "uidt": "SingleLineText",
-        "description": "format_telkom | format_kampus | format_instansi"
-      },
-      {
-        "title": "acceptance_statement",
-        "uidt": "LongText"
-      },
-      {
-        "title": "generated_doc_url",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "generated_bast_id",
-        "uidt": "Number",
-        "description": "terisi saat status=generated; tanpa ini, kontrak yang di-generate ulang membuat PM tidak tahu draf mana menghasilkan BAST yang mana"
-      },
-      {
-        "title": "approved_by",
-        "uidt": "SingleLineText",
-        "description": "Diisi PM. HANYA diisi manusia (PM)"
-      },
-      {
-        "title": "approved_at",
-        "uidt": "DateTime",
-        "description": "Diisi PM. HANYA diisi manusia (PM)"
-      }
-    ],
-    "evidence_photo": [
-      {
-        "title": "odk_instance_id",
-        "uidt": "SingleLineText",
-        "description": "ID submission ODK Central -- sinkron ulang = update, bukan baris kembar"
-      },
-      {
-        "title": "contract_item_id",
-        "uidt": "Number",
-        "description": "baris BoQ kontrak yang dibuktikan foto ini"
-      },
-      {
-        "title": "requirement_id",
-        "uidt": "Number",
-        "description": "lampiran wajib kontrak yang dipenuhi (bila ada) -- sambungan checklist gabungan"
-      },
-      {
-        "title": "component_label",
-        "uidt": "SingleLineText",
-        "description": "mis. '4 Unit Switch', '1 Unit Router'",
-        "pv": true
-      },
-      {
-        "title": "photo_type",
-        "uidt": "SingleSelect",
-        "options": [
-          "item",
-          "serial_label",
-          "installation",
-          "screenshot"
-        ],
-        "description": "foto barang / label serial number / pemasangan / tangkapan layar"
-      },
-      {
-        "title": "serial_number",
-        "uidt": "SingleLineText",
-        "description": "wajib untuk foto label SN; bahan registry aset & garansi (Bulan 6)"
-      },
-      {
-        "title": "photo_url",
-        "uidt": "SingleLineText"
-      },
-      {
-        "title": "taken_at",
-        "uidt": "DateTime",
-        "description": "waktu pengambilan foto"
-      },
-      {
-        "title": "gps_lat",
-        "uidt": "Decimal",
-        "description": "lintang, mis. -7.347824"
-      },
-      {
-        "title": "gps_lon",
-        "uidt": "Decimal",
-        "description": "bujur, mis. 108.232318"
-      },
-      {
-        "title": "auto_check_notes",
-        "uidt": "LongText",
-        "description": "catatan pemeriksaan otomatis n8n, mis. 'jarak 120 m dari lokasi proyek'"
-      },
-      {
-        "title": "review_status",
-        "uidt": "SingleSelect",
-        "options": [
-          "pending",
-          "approved",
-          "rejected"
-        ],
-        "description": "Diisi PM. pending = belum dicek. HANYA PM yang mengubah"
-      },
-      {
-        "title": "reviewed_by",
-        "uidt": "SingleLineText",
-        "description": "Diisi PM. HANYA diisi PM"
-      },
-      {
-        "title": "reviewed_at",
-        "uidt": "DateTime",
-        "description": "Diisi PM. HANYA diisi PM"
-      },
-      {
-        "title": "review_note",
-        "uidt": "LongText",
-        "description": "Diisi PM. alasan bila ditolak, mis. 'SN tidak terbaca'"
-      }
-    ],
-    "extracted_field": [
-      {
-        "title": "document_id",
-        "uidt": "Number"
-      },
-      {
-        "title": "field_path",
-        "uidt": "SingleLineText",
-        "description": "mis. contract.Nomor Kontrak Kerja",
-        "pv": true
-      },
-      {
-        "title": "ai_value_text",
-        "uidt": "LongText"
-      },
-      {
-        "title": "evidence_page",
-        "uidt": "Number",
-        "description": "dihitung deterministik, BUKAN ditulis LLM"
-      },
-      {
-        "title": "evidence_quote",
-        "uidt": "LongText",
-        "description": "potongan teks dokumen yang cocok"
-      },
-      {
-        "title": "evidence_score",
-        "uidt": "Decimal",
-        "description": "0-1: seberapa persis nilai ditemukan di teks dokumen"
-      },
-      {
-        "title": "system_status",
-        "uidt": "SingleSelect",
-        "options": [
-          "auto_verified",
-          "auto_accepted",
-          "review_required",
-          "unsupported",
-          "conflict",
-          "missing"
-        ],
-        "description": "saran sistem, BUKAN persetujuan"
-      }
-    ],
-    "field_review": [
-      {
-        "title": "document_id",
-        "uidt": "Number",
-        "description": "Diisi PM. RESTRICT: dokumen dengan keputusan PM tidak boleh terhapus diam-diam"
-      },
-      {
-        "title": "field_path",
-        "uidt": "SingleLineText",
-        "description": "Diisi PM.",
-        "pv": true
-      },
-      {
-        "title": "reviewed_ai_value_text",
-        "uidt": "LongText",
-        "description": "Diisi PM. nilai AI yang DILIHAT PM saat memutuskan; kalau nilai AI berubah, konfirmasi lama tidak berlaku untuk nilai baru"
-      },
-      {
-        "title": "decision",
-        "uidt": "SingleSelect",
-        "options": [
-          "confirmed",
-          "corrected",
-          "rejected"
-        ],
-        "description": "Diisi PM."
-      },
-      {
-        "title": "final_value_text",
-        "uidt": "LongText",
-        "description": "Diisi PM."
-      },
-      {
-        "title": "reviewed_by",
-        "uidt": "SingleLineText",
-        "description": "Diisi PM."
-      },
-      {
-        "title": "reviewed_at",
-        "uidt": "DateTime",
-        "description": "Diisi PM."
-      },
-      {
-        "title": "reviewer_note",
-        "uidt": "LongText",
-        "description": "Diisi PM."
-      }
-    ]
+    "document": {
+      "title": "Dokumen",
+      "description": "Setiap berkas yang masuk, apa pun jenisnya.",
+      "columns": [
+        {
+          "column_name": "content_hash",
+          "title": "Sidik Berkas",
+          "uidt": "SingleLineText",
+          "description": "sha256 isi berkas -- kunci anti-dobel; berkas yang sama diproses ulang memperbarui baris yang sama"
+        },
+        {
+          "column_name": "doc_type",
+          "title": "Jenis Dokumen",
+          "uidt": "SingleSelect",
+          "options": [
+            "kontrak",
+            "sph",
+            "bast"
+          ]
+        },
+        {
+          "column_name": "source_filename",
+          "title": "Nama Berkas",
+          "uidt": "SingleLineText",
+          "pv": true
+        },
+        {
+          "column_name": "page_count",
+          "title": "Jumlah Halaman",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "markdown",
+          "title": "Isi Dokumen",
+          "uidt": "LongText",
+          "description": "teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan"
+        },
+        {
+          "column_name": "validation_notes",
+          "title": "Catatan Validasi",
+          "uidt": "LongText",
+          "description": "peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total"
+        }
+      ]
+    },
+    "contract": {
+      "title": "Kontrak",
+      "description": "Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm. 11). Sumber kebenaran BAST pelanggan.",
+      "columns": [
+        {
+          "column_name": "document_id",
+          "title": "ID Dokumen",
+          "uidt": "Number",
+          "description": "satu kontrak = satu dokumen"
+        },
+        {
+          "column_name": "mybhakti_project_ref",
+          "title": "Rujukan Proyek MyBhakti",
+          "uidt": "SingleLineText",
+          "description": "proyek/deal di MyBhakti, diisi n8n -- pengikat semua dokumen satu proyek; sengaja bukan relasi (hlm. 7)"
+        },
+        {
+          "column_name": "contract_type",
+          "title": "Jenis Kontrak",
+          "uidt": "SingleSelect",
+          "options": [
+            "nota_pesanan",
+            "surat_pesanan",
+            "spk",
+            "kontrak_kerja_sama",
+            "pks",
+            "lainnya"
+          ],
+          "description": "bentuk dokumen dasar"
+        },
+        {
+          "column_name": "contract_number",
+          "title": "Nomor Kontrak",
+          "uidt": "SingleLineText",
+          "description": "nomor resmi kontrak / SPK / PKS",
+          "pv": true
+        },
+        {
+          "column_name": "contract_number_internal",
+          "title": "Nomor Registrasi Internal",
+          "uidt": "SingleLineText",
+          "description": "nomor registrasi internal BUT"
+        },
+        {
+          "column_name": "work_title",
+          "title": "Nama Pekerjaan",
+          "uidt": "LongText",
+          "description": "judul pengadaan / lingkup pekerjaan"
+        },
+        {
+          "column_name": "location_text",
+          "title": "Lokasi",
+          "uidt": "SingleLineText",
+          "description": "kota/lokasi seperti tertulis di kontrak (tempat dibuat atau pelaksanaan)"
+        },
+        {
+          "column_name": "contract_date_text",
+          "title": "Tanggal Kontrak Tertulis",
+          "uidt": "SingleLineText",
+          "description": "apa adanya di dokumen"
+        },
+        {
+          "column_name": "contract_date",
+          "title": "Tanggal Kontrak",
+          "uidt": "Date",
+          "description": "hasil baca; kosong bila ragu"
+        },
+        {
+          "column_name": "start_date_text",
+          "title": "Tanggal Mulai Tertulis",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "start_date",
+          "title": "Tanggal Mulai",
+          "uidt": "Date"
+        },
+        {
+          "column_name": "end_date_text",
+          "title": "Tanggal Selesai Tertulis",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "end_date",
+          "title": "Tanggal Selesai",
+          "uidt": "Date"
+        },
+        {
+          "column_name": "duration_text",
+          "title": "Jangka Waktu",
+          "uidt": "SingleLineText",
+          "description": "mis. '30 hari kalender'"
+        },
+        {
+          "column_name": "contract_value",
+          "title": "Nilai Kontrak",
+          "uidt": "Currency",
+          "description": "total termasuk PPN bila dokumen menyebutnya begitu"
+        },
+        {
+          "column_name": "subtotal_value",
+          "title": "Subtotal",
+          "uidt": "Currency"
+        },
+        {
+          "column_name": "vat_value",
+          "title": "Nilai PPN",
+          "uidt": "Currency"
+        },
+        {
+          "column_name": "vat_percentage",
+          "title": "Persentase PPN",
+          "uidt": "SingleLineText",
+          "description": "apa adanya di dokumen"
+        },
+        {
+          "column_name": "currency",
+          "title": "Mata Uang",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "payment_mechanism",
+          "title": "Cara Pembayaran",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "penalty_terms",
+          "title": "Ketentuan Denda",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "bast_terms",
+          "title": "Syarat Lampiran BAST",
+          "uidt": "LongText",
+          "description": "ringkasan; rincian per syarat ada di tabel Syarat Kontrak"
+        },
+        {
+          "column_name": "bank_name",
+          "title": "Nama Bank",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "bank_account_number",
+          "title": "Nomor Rekening",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "bank_account_name",
+          "title": "Nama Pemilik Rekening",
+          "uidt": "SingleLineText"
+        }
+      ]
+    },
+    "contract_party": {
+      "title": "Pihak Kontrak",
+      "description": "Pihak penandatangan kontrak seperti tertulis saat diteken -- bukan data master. Satu orang bisa muncul di banyak baris karena menandatangani banyak dokumen.",
+      "columns": [
+        {
+          "column_name": "contract_id",
+          "title": "ID Kontrak",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "role",
+          "title": "Peran",
+          "uidt": "SingleSelect",
+          "options": [
+            "pemberi_kerja",
+            "pelaksana"
+          ],
+          "description": "pemberi_kerja = pelanggan; pelaksana = BUT. Ditentukan dari nama instansi, bukan dari sebutan 'Pihak Pertama/Kedua'"
+        },
+        {
+          "column_name": "party_label_text",
+          "title": "Sebutan di Dokumen",
+          "uidt": "SingleLineText",
+          "description": "mis. 'PIHAK PERTAMA' -- sebutan ini bisa terbalik antar-format kontrak, karena itu disimpan terpisah dari peran"
+        },
+        {
+          "column_name": "org_name_text",
+          "title": "Nama Instansi",
+          "uidt": "SingleLineText",
+          "pv": true
+        },
+        {
+          "column_name": "signer_name",
+          "title": "Nama Penandatangan",
+          "uidt": "SingleLineText",
+          "description": "kosong bila tidak terbaca"
+        },
+        {
+          "column_name": "signer_title",
+          "title": "Jabatan Penandatangan",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "org_address_text",
+          "title": "Alamat",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "npwp",
+          "title": "NPWP",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "mybhakti_party_ref",
+          "title": "Rujukan Pihak MyBhakti",
+          "uidt": "SingleLineText",
+          "description": "diisi n8n"
+        }
+      ]
+    },
+    "contract_item": {
+      "title": "Rincian Kontrak",
+      "description": "BoQ kontrak = kewajiban ke pelanggan (hlm. 7). Sumber tunggal rincian pekerjaan untuk BAST pelanggan.",
+      "columns": [
+        {
+          "column_name": "contract_id",
+          "title": "ID Kontrak",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "line_no",
+          "title": "No Urut",
+          "uidt": "Number",
+          "description": "urutan baca di dokumen"
+        },
+        {
+          "column_name": "category",
+          "title": "Kelompok",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "description",
+          "title": "Uraian",
+          "uidt": "LongText",
+          "pv": true
+        },
+        {
+          "column_name": "specification",
+          "title": "Spesifikasi",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "quantity",
+          "title": "Volume",
+          "uidt": "Decimal"
+        },
+        {
+          "column_name": "unit",
+          "title": "Satuan",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "period",
+          "title": "Periode",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "unit_price",
+          "title": "Harga Satuan",
+          "uidt": "Currency",
+          "description": "selalu dikonfirmasi PM (hlm. 20)"
+        },
+        {
+          "column_name": "line_total",
+          "title": "Jumlah Harga",
+          "uidt": "Currency"
+        },
+        {
+          "column_name": "remarks",
+          "title": "Keterangan",
+          "uidt": "LongText"
+        }
+      ]
+    },
+    "contract_requirement": {
+      "title": "Syarat Kontrak",
+      "description": "Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST.",
+      "columns": [
+        {
+          "column_name": "contract_id",
+          "title": "ID Kontrak",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "line_no",
+          "title": "No Urut",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "requirement_type",
+          "title": "Jenis Syarat",
+          "uidt": "SingleSelect",
+          "options": [
+            "lampiran_wajib",
+            "syarat_serah_terima",
+            "boleh_parsial"
+          ],
+          "description": "lampiran wajib / syarat serah terima / boleh parsial"
+        },
+        {
+          "column_name": "requirement_text",
+          "title": "Isi Syarat",
+          "uidt": "LongText",
+          "description": "mis. 'Berita Acara Uji Terima'",
+          "pv": true
+        },
+        {
+          "column_name": "clause_ref",
+          "title": "Pasal Rujukan",
+          "uidt": "SingleLineText",
+          "description": "mis. 'Pasal 9 ayat 2'"
+        },
+        {
+          "column_name": "evidence_page",
+          "title": "Halaman",
+          "uidt": "Number",
+          "description": "halaman tempat syarat ini ditemukan"
+        },
+        {
+          "column_name": "evidence_quote",
+          "title": "Kutipan Dokumen",
+          "uidt": "LongText",
+          "description": "kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)"
+        }
+      ]
+    },
+    "sph": {
+      "title": "SPH Vendor",
+      "description": "Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak.",
+      "columns": [
+        {
+          "column_name": "document_id",
+          "title": "ID Dokumen",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "mybhakti_project_ref",
+          "title": "Rujukan Proyek MyBhakti",
+          "uidt": "SingleLineText",
+          "description": "diisi n8n"
+        },
+        {
+          "column_name": "mybhakti_vendor_ref",
+          "title": "Rujukan Vendor MyBhakti",
+          "uidt": "SingleLineText",
+          "description": "diisi n8n"
+        },
+        {
+          "column_name": "sph_number",
+          "title": "Nomor SPH",
+          "uidt": "SingleLineText",
+          "pv": true
+        },
+        {
+          "column_name": "sph_date_text",
+          "title": "Tanggal SPH Tertulis",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "sph_date",
+          "title": "Tanggal SPH",
+          "uidt": "Date"
+        },
+        {
+          "column_name": "project_name",
+          "title": "Perihal",
+          "uidt": "LongText",
+          "description": "perihal / nama pekerjaan yang ditawarkan"
+        },
+        {
+          "column_name": "client_name",
+          "title": "Ditujukan Kepada",
+          "uidt": "SingleLineText",
+          "description": "instansi yang dituju surat"
+        },
+        {
+          "column_name": "vendor_name",
+          "title": "Nama Vendor",
+          "uidt": "SingleLineText",
+          "description": "penerbit SPH seperti tertulis"
+        },
+        {
+          "column_name": "vendor_npwp",
+          "title": "NPWP Vendor",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "subtotal_value",
+          "title": "Subtotal",
+          "uidt": "Currency"
+        },
+        {
+          "column_name": "vat_percentage",
+          "title": "Persentase PPN",
+          "uidt": "SingleLineText",
+          "description": "apa adanya di dokumen"
+        },
+        {
+          "column_name": "vat_value",
+          "title": "Nilai PPN",
+          "uidt": "Currency"
+        },
+        {
+          "column_name": "total_price",
+          "title": "Total Penawaran",
+          "uidt": "Currency",
+          "description": "grand total"
+        },
+        {
+          "column_name": "validity_text",
+          "title": "Masa Berlaku",
+          "uidt": "SingleLineText",
+          "description": "masa berlaku penawaran"
+        },
+        {
+          "column_name": "payment_mechanism",
+          "title": "Cara Pembayaran",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "currency",
+          "title": "Mata Uang",
+          "uidt": "SingleLineText"
+        }
+      ]
+    },
+    "sph_item": {
+      "title": "Rincian SPH",
+      "description": "Baris penawaran vendor. Relasi ke barang yang dibeli (procurement item) untuk tabel banding harga dirancang di Bulan 5 -- belum ada di sini.",
+      "columns": [
+        {
+          "column_name": "sph_id",
+          "title": "ID SPH",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "line_no",
+          "title": "No Urut",
+          "uidt": "Number",
+          "description": "urutan baca, bukan kolom 'No' di dokumen"
+        },
+        {
+          "column_name": "category",
+          "title": "Kelompok",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "description",
+          "title": "Uraian",
+          "uidt": "LongText",
+          "pv": true
+        },
+        {
+          "column_name": "specification",
+          "title": "Spesifikasi",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "brand",
+          "title": "Merek",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "part_number",
+          "title": "Nomor Part",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "quantity",
+          "title": "Volume",
+          "uidt": "Decimal"
+        },
+        {
+          "column_name": "unit",
+          "title": "Satuan",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "period",
+          "title": "Periode",
+          "uidt": "SingleLineText"
+        },
+        {
+          "column_name": "unit_price",
+          "title": "Harga Satuan",
+          "uidt": "Currency",
+          "description": "selalu dikonfirmasi PM (hlm. 20)"
+        },
+        {
+          "column_name": "line_total",
+          "title": "Jumlah Harga",
+          "uidt": "Currency"
+        },
+        {
+          "column_name": "remarks",
+          "title": "Keterangan",
+          "uidt": "LongText"
+        }
+      ]
+    },
+    "extracted_field": {
+      "title": "Hasil Ekstraksi",
+      "description": "Satu baris per field: nilai terbaca + bukti. Antrean kerja PM. Ditulis mesin saja; dokumen yang sudah mulai diperiksa PM tidak ditimpa otomatis.",
+      "columns": [
+        {
+          "column_name": "document_id",
+          "title": "ID Dokumen",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "field_path",
+          "title": "Nama Field",
+          "uidt": "SingleLineText",
+          "description": "mis. 'Nomor Kontrak Kerja' atau 'List Item/Barang[0].Harga Satuan'",
+          "pv": true
+        },
+        {
+          "column_name": "ai_value_text",
+          "title": "Nilai Terbaca Sistem",
+          "uidt": "LongText"
+        },
+        {
+          "column_name": "evidence_page",
+          "title": "Halaman Bukti",
+          "uidt": "Number",
+          "description": "dihitung sistem, bukan ditulis LLM"
+        },
+        {
+          "column_name": "evidence_quote",
+          "title": "Kutipan Bukti",
+          "uidt": "LongText",
+          "description": "potongan teks dokumen tempat nilai ditemukan"
+        },
+        {
+          "column_name": "evidence_score",
+          "title": "Skor Bukti",
+          "uidt": "Decimal",
+          "description": "0-1: seberapa persis nilai ditemukan di teks dokumen"
+        },
+        {
+          "column_name": "system_status",
+          "title": "Status Bukti",
+          "uidt": "SingleSelect",
+          "options": [
+            "bukti_kuat",
+            "bukti_cukup",
+            "perlu_dicek",
+            "tidak_ada_di_dokumen",
+            "bertentangan",
+            "kosong"
+          ],
+          "description": "saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar"
+        }
+      ]
+    },
+    "field_review": {
+      "title": "Keputusan PM",
+      "description": "Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini.",
+      "columns": [
+        {
+          "column_name": "document_id",
+          "title": "ID Dokumen",
+          "uidt": "Number",
+          "description": "Diisi PM. dokumen dengan keputusan PM tidak boleh terhapus diam-diam"
+        },
+        {
+          "column_name": "field_path",
+          "title": "Nama Field",
+          "uidt": "SingleLineText",
+          "description": "Diisi PM.",
+          "pv": true
+        },
+        {
+          "column_name": "reviewed_ai_value_text",
+          "title": "Nilai Sistem Saat Diperiksa",
+          "uidt": "LongText",
+          "description": "Diisi PM. nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru"
+        },
+        {
+          "column_name": "decision",
+          "title": "Keputusan",
+          "uidt": "SingleSelect",
+          "options": [
+            "benar",
+            "dikoreksi",
+            "ditolak"
+          ],
+          "description": "Diisi PM."
+        },
+        {
+          "column_name": "final_value_text",
+          "title": "Nilai Final",
+          "uidt": "LongText",
+          "description": "Diisi PM. wajib diisi bila dikoreksi"
+        },
+        {
+          "column_name": "reviewed_by",
+          "title": "Diperiksa Oleh",
+          "uidt": "SingleLineText",
+          "description": "Diisi PM."
+        },
+        {
+          "column_name": "reviewed_at",
+          "title": "Waktu Diperiksa",
+          "uidt": "DateTime",
+          "description": "Diisi PM."
+        },
+        {
+          "column_name": "reviewer_note",
+          "title": "Catatan PM",
+          "uidt": "LongText",
+          "description": "Diisi PM."
+        }
+      ]
+    }
   }
 }

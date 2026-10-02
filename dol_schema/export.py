@@ -1,22 +1,24 @@
 """
-Ekspor definisi skema ke format yang bisa dibaca konsumen non-Python.
+Ekspor definisi skema ke format yang bisa dibaca konsumen non-Python, dan penerjemah nama
+kolom <-> judul NocoDB.
 
 Kenapa ada: n8n (RPA Engineer) dan compiler lampiran BAST (Network Engineer) tidak bisa
 meng-import `model.py`. Mereka membaca `generated/schema.json`. Tanpa ini, nama kolom akan
 ditulis ulang di tiap repo — persis penyakit yang membuat exporter lama tidak terawat.
 
-Tipe NocoDB diturunkan dari tipe yang DIDEKLARASIKAN di model, bukan ditebak dari nama kolom.
-Ini menutup satu kelas bug: exporter lama menebak tipe dari nama, sehingga kolom bernama
-numerik yang isinya teks ("1/1000", "30 hari kalender") gagal masuk NocoDB tanpa pesan jelas.
+Judul NocoDB = label bahasa Indonesia. API rekaman NocoDB v2 memakai JUDUL kolom sebagai
+kunci JSON dan di klausa `where`, jadi setiap pengirim wajib menerjemahkan nama teknis ke
+judul sebelum mengirim. Terjemahannya hanya ada di sini (`to_nocodb_record`,
+`nocodb_title`), dan ikut di `schema.json` (`columns[].label`) untuk n8n.
 """
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from dol_schema.model import (
     ALL_TABLES, AUDIT_COLUMNS, OWNERS, SCHEMA_VERSION, Column, Table,
-    insert_order, natural_key, parent_refs,
+    insert_order, natural_key, parent_refs, table,
 )
 
 # Kolom prosa: dirender sebagai area teks di UI NocoDB supaya PM bisa membacanya utuh.
@@ -31,13 +33,24 @@ _MONEY_SUFFIX = ("_value", "_price", "_total")
 
 # Aturan yang harus diikuti SETIAP pengirim data (n8n, dol-parser, compiler BAST).
 CONVENTIONS = {
-    "upsert": "Cari baris dengan upsert_key; bila ada -> PATCH, bila tidak -> POST. "
-              "Tabel tanpa upsert_key: hapus anak lama milik induk yang sama lalu isi ulang.",
+    "status_tabel": "Hanya tabel berstatus 'berlaku' yang dibuat & diisi di NocoDB. Tabel "
+                    "'ditunda' adalah usulan untuk dibahas; jangan dikirim ke NocoDB.",
+    "judul_nocodb": "API rekaman NocoDB memakai JUDUL kolom (columns[].label, bahasa "
+                    "Indonesia) sebagai kunci JSON dan di klausa where. Terjemahkan nama "
+                    "teknis ke judul sebelum mengirim; kolom 'Id' tetap 'Id'.",
+    "upsert": "Cari baris dengan upsert_key; bila ada -> PATCH, bila tidak -> POST. Baris "
+              "anak milik induk yang sama yang tidak ada lagi di kiriman baru dihapus.",
+    "dokumen_sudah_direview": "Dokumen yang sudah punya baris di field_review (Keputusan PM) "
+                              "tidak boleh ditimpa otomatis: proses ulang hanya atas "
+                              "permintaan PM.",
     "foreign_keys": "Baris anak membawa placeholder `_<induk>_ref` berisi nilai kunci induk. "
                     "Pengirim menukarnya dengan Id baris induk yang baru dibuat, mengikuti "
                     "insert_order (induk dulu).",
     "human_columns": "Kolom di human_columns HANYA diisi PM lewat UI NocoDB. Pengirim mesin "
                      "tidak boleh menyertakannya sama sekali, termasuk saat sinkron ulang.",
+    "nilai_terverifikasi": "Dokumen hilir (mis. BAST) hanya boleh memakai nilai field yang "
+                           "punya keputusan PM 'benar' atau 'dikoreksi' dan belum basi "
+                           "(view nilai_terverifikasi). Nilai sistem saja bukan persetujuan.",
     "dates": "Kolom date = string 'YYYY-MM-DD'; timestamptz = ISO 8601 dengan zona waktu.",
     "money": "Nominal dalam mata uang kolom currency (bawaan IDR), angka tanpa pemisah ribuan.",
     "mybhakti_refs": "Kolom mybhakti_*_ref diisi n8n dari API MyBhakti (read-only); bukan FK.",
@@ -68,9 +81,39 @@ def nocodb_type(col: Column) -> str:
     raise ValueError(f"Tipe tak dikenal '{col.type}' pada kolom {col.name}")
 
 
+# --------------------------------------------------------------------------- judul NocoDB
+def nocodb_title(table_name: str, column_name: str) -> str:
+    """Nama teknis kolom -> judul kolom di NocoDB. 'Id' (kolom bawaan NocoDB) tetap 'Id'."""
+    if column_name == "Id":
+        return "Id"
+    col = table(table_name).column(column_name)
+    if col is None:
+        raise KeyError(f"{table_name}.{column_name} tidak ada di model")
+    return col.label
+
+
+def to_nocodb_record(table_name: str, row: Dict[str, Any]) -> Dict[str, Any]:
+    """Satu baris {nama_teknis: nilai} -> {judul_nocodb: nilai}, siap dikirim ke API NocoDB."""
+    return {nocodb_title(table_name, k): v for k, v in row.items()}
+
+
+def from_nocodb_record(table_name: str, record: Dict[str, Any]) -> Dict[str, Any]:
+    """Kebalikan to_nocodb_record. Kolom bawaan NocoDB selain 'Id' dibuang."""
+    by_title = {c.label: c.name for c in table(table_name).columns}
+    out: Dict[str, Any] = {}
+    for k, v in record.items():
+        if k == "Id":
+            out["Id"] = v
+        elif k in by_title:
+            out[by_title[k]] = v
+    return out
+
+
+# --------------------------------------------------------------------------- schema.json
 def _column_dict(col: Column) -> Dict[str, Any]:
     out: Dict[str, Any] = {
         "name": col.name,
+        "label": col.label,
         "type": col.type,
         "nocodb_type": nocodb_type(col),
         "required": not col.null,
@@ -97,10 +140,12 @@ def _table_dict(t: Table) -> Dict[str, Any]:
     key = natural_key(t)
     out: Dict[str, Any] = {
         "name": t.name,
+        "label": t.label,
+        "status": t.status,
         "domain": t.domain,
         "owner": OWNERS[t.owner],
         "written_by": t.written_by,
-        "in_nocodb": t.nocodb,
+        "in_nocodb": t.in_nocodb,
         "display_column": t.display,
         "upsert_key": list(key) if key else None,
         "parent_refs": parent_refs(t),
@@ -116,16 +161,18 @@ def _table_dict(t: Table) -> Dict[str, Any]:
 
 def to_schema_dict() -> Dict[str, Any]:
     """Kontrak data untuk semua pengirim & pembaca (n8n, compiler BAST, dol-parser)."""
+    berlaku = [n for n in insert_order() if table(n).status == "berlaku"]
     return {
         "schema_version": SCHEMA_VERSION,
-        "insert_order": insert_order(),
+        "insert_order": berlaku,
         "conventions": CONVENTIONS,
         "tables": [_table_dict(t) for t in ALL_TABLES],
     }
 
 
+# --------------------------------------------------------------------------- nocodb_fields.json
 def _nocodb_field(t: Table, c: Column) -> Dict[str, Any]:
-    out: Dict[str, Any] = {"title": c.name, "uidt": nocodb_type(c)}
+    out: Dict[str, Any] = {"column_name": c.name, "title": c.label, "uidt": nocodb_type(c)}
     if c.enum:
         out["options"] = list(c.enum)
     description = c.note
@@ -139,19 +186,35 @@ def _nocodb_field(t: Table, c: Column) -> Dict[str, Any]:
 
 
 def to_nocodb_fields() -> Dict[str, Any]:
-    """Spesifikasi kolom siap pakai untuk membuat tabel lewat API NocoDB.
+    """Spesifikasi tabel & kolom siap pakai untuk membuat tabel lewat API meta NocoDB.
 
     `id`, `created_at`, `updated_at` tidak disertakan: NocoDB membuatnya sendiri.
-    Tabel bertanda `nocodb=False` juga tidak disertakan sama sekali.
+    Hanya tabel `in_nocodb` (berlaku & bukan khusus PostgreSQL).
     """
     return {
         "schema_version": SCHEMA_VERSION,
         "tables": {
-            t.name: [_nocodb_field(t, c) for c in t.columns if c.name not in AUDIT_COLUMNS]
-            for t in ALL_TABLES if t.nocodb
+            t.name: {
+                "title": t.label,
+                "description": t.note,
+                "columns": [_nocodb_field(t, c) for c in t.columns
+                            if c.name not in AUDIT_COLUMNS],
+            }
+            for t in ALL_TABLES if t.in_nocodb
         },
     }
 
 
+def table_name_for_title(title: str) -> Optional[str]:
+    """Judul tabel di NocoDB -> nama teknis (None bila bukan tabel model ini)."""
+    return next((t.name for t in ALL_TABLES if t.label == title), None)
+
+
 def to_json(obj: Dict[str, Any]) -> str:
     return json.dumps(obj, indent=2, ensure_ascii=False) + "\n"
+
+
+__all__: List[str] = [
+    "CONVENTIONS", "nocodb_type", "nocodb_title", "to_nocodb_record", "from_nocodb_record",
+    "to_schema_dict", "to_nocodb_fields", "table_name_for_title", "to_json",
+]

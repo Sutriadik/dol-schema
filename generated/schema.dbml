@@ -1,355 +1,357 @@
 // Open ADE — Delivery Ops Layer: skema companion NocoDB
-// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.1).
+// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.2).
 // JANGAN diedit tangan: ubah model.py lalu jalankan `python -m dol_schema --emit`.
 // Buka di dbdiagram.io (tempel isi berkas ini) atau ekstensi DBML di VS Code.
 
 Project dol_schema {
   database_type: 'PostgreSQL'
-  Note: 'Warna header = pemilik tabel: biru = AI Engineer, ungu = Network Engineer, hijau = RPA Engineer, oranye = PM, abu-abu = hanya PostgreSQL (tidak dikirim ke NocoDB). Kolom bertanda [DIISI PM] hanya diubah PM. Kolom *_ref MyBhakti sengaja BUKAN foreign key (briefing hlm. 7).'
+  Note: 'Warna header = pemilik tabel: biru = AI Engineer, ungu = Network Engineer, hijau = RPA Engineer, oranye = PM, abu-abu = hanya PostgreSQL (tidak dikirim ke NocoDB), kuning = usulan yang ditunda. Kolom bertanda [DIISI PM] hanya diubah PM. Kolom *_ref MyBhakti sengaja BUKAN foreign key (briefing hlm. 7).'
 }
 
 Table document [headercolor: #3498DB] {
   id bigint [pk, increment]
-  content_hash text [not null, unique, note: 'sha1 isi berkas -- kunci idempotensi; proses ulang = UPDATE']
-  doc_type document_doc_type [not null]
-  source_filename text [not null]
-  page_count integer [note: 'CHECK (page_count > 0)']
-  markdown text [note: 'markdown utuh; PM membaca tanpa membuka PDF']
-  validation_notes text [note: '[2026.10.1] peringatan tingkat dokumen untuk PM, mis. salinan ganda atau jumlah item tidak sama dengan total']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  content_hash text [not null, unique, note: 'Sidik Berkas. sha256 isi berkas -- kunci anti-dobel; berkas yang sama diproses ulang memperbarui baris yang sama']
+  doc_type document_doc_type [not null, note: 'Jenis Dokumen']
+  source_filename text [not null, note: 'Nama Berkas']
+  page_count integer [note: 'Jumlah Halaman; CHECK (page_count > 0)']
+  markdown text [note: 'Isi Dokumen. teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan']
+  validation_notes text [note: 'Catatan Validasi. peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'Supertipe: setiap berkas yang masuk, apa pun jenisnya. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Dokumen. Setiap berkas yang masuk, apa pun jenisnya. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table contract [headercolor: #3498DB] {
   id bigint [pk, increment]
-  document_id integer [not null, unique, note: 'UNIQUE -> 1:1 dengan document']
-  mybhakti_project_ref text [note: '[2026.10.1] proyek/deal di MyBhakti, diisi n8n -- kunci pengikat semua dokumen satu proyek; SENGAJA bukan FK (hlm. 7)']
-  contract_type contract_contract_type [note: '[2026.10.1] bentuk dokumen dasar: nota pesanan, surat pesanan, SPK, kontrak kerja sama, PKS']
-  contract_number text [note: 'nomor kontrak resmi / SPK / PKS']
-  contract_number_internal text [note: 'nomor registrasi internal BUT']
-  work_title text [not null, note: 'judul pengadaan / lingkup pekerjaan']
-  contract_date_text text
-  contract_date date
-  start_date_text text
-  start_date date
-  end_date_text text
-  end_date date
-  duration_text text
-  contract_value numeric(18,2) [note: 'CHECK (contract_value >= 0)']
-  subtotal_value numeric(18,2) [note: 'CHECK (subtotal_value >= 0)']
-  vat_value numeric(18,2) [note: 'CHECK (vat_value >= 0)']
-  vat_percentage text
-  currency char(3) [not null, default: 'IDR', note: 'default IDR']
-  payment_mechanism text
-  penalty_terms text
-  bast_terms text
-  bank_name text
-  bank_account_number text
-  bank_account_name text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  document_id integer [not null, unique, note: 'ID Dokumen. satu kontrak = satu dokumen']
+  mybhakti_project_ref text [note: 'Rujukan Proyek MyBhakti. proyek/deal di MyBhakti, diisi n8n -- pengikat semua dokumen satu proyek; sengaja bukan relasi (hlm. 7)']
+  contract_type contract_contract_type [note: 'Jenis Kontrak. bentuk dokumen dasar']
+  contract_number text [note: 'Nomor Kontrak. nomor resmi kontrak / SPK / PKS']
+  contract_number_internal text [note: 'Nomor Registrasi Internal. nomor registrasi internal BUT']
+  work_title text [note: 'Nama Pekerjaan. judul pengadaan / lingkup pekerjaan']
+  location_text text [note: 'Lokasi. kota/lokasi seperti tertulis di kontrak (tempat dibuat atau pelaksanaan)']
+  contract_date_text text [note: 'Tanggal Kontrak Tertulis. apa adanya di dokumen']
+  contract_date date [note: 'Tanggal Kontrak. hasil baca; kosong bila ragu']
+  start_date_text text [note: 'Tanggal Mulai Tertulis']
+  start_date date [note: 'Tanggal Mulai']
+  end_date_text text [note: 'Tanggal Selesai Tertulis']
+  end_date date [note: 'Tanggal Selesai']
+  duration_text text [note: 'Jangka Waktu. mis. \'30 hari kalender\'']
+  contract_value numeric(18,2) [note: 'Nilai Kontrak. total termasuk PPN bila dokumen menyebutnya begitu; CHECK (contract_value >= 0)']
+  subtotal_value numeric(18,2) [note: 'Subtotal; CHECK (subtotal_value >= 0)']
+  vat_value numeric(18,2) [note: 'Nilai PPN; CHECK (vat_value >= 0)']
+  vat_percentage text [note: 'Persentase PPN. apa adanya di dokumen']
+  currency char(3) [not null, default: 'IDR', note: 'Mata Uang']
+  payment_mechanism text [note: 'Cara Pembayaran']
+  penalty_terms text [note: 'Ketentuan Denda']
+  bast_terms text [note: 'Syarat Lampiran BAST. ringkasan; rincian per syarat ada di tabel Syarat Kontrak']
+  bank_name text [note: 'Nama Bank']
+  bank_account_number text [note: 'Nomor Rekening']
+  bank_account_name text [note: 'Nama Pemilik Rekening']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm. 11). Sumber utama penyusunan draf BAST. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Kontrak. Kontrak/SPK pelanggan dalam bentuk apa pun -- dibaca sekali, dipakai sepanjang proyek (hlm. 11). Sumber kebenaran BAST pelanggan. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table contract_party [headercolor: #3498DB] {
   id bigint [pk, increment]
-  contract_id integer [not null]
-  role contract_party_role [not null, note: 'first_party/client (pemberi kerja) vs second_party/contractor (pelaksana)']
-  org_name_text text [not null]
-  signer_name text [not null]
-  signer_title text
-  org_address_text text
-  npwp text
-  mybhakti_party_ref text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  contract_id integer [not null, note: 'ID Kontrak']
+  role contract_party_role [not null, note: 'Peran. pemberi_kerja = pelanggan; pelaksana = BUT. Ditentukan dari nama instansi, bukan dari sebutan \'Pihak Pertama/Kedua\'']
+  party_label_text text [note: 'Sebutan di Dokumen. mis. \'PIHAK PERTAMA\' -- sebutan ini bisa terbalik antar-format kontrak, karena itu disimpan terpisah dari peran']
+  org_name_text text [not null, note: 'Nama Instansi']
+  signer_name text [note: 'Nama Penandatangan. kosong bila tidak terbaca']
+  signer_title text [note: 'Jabatan Penandatangan']
+  org_address_text text [note: 'Alamat']
+  npwp text [note: 'NPWP']
+  mybhakti_party_ref text [note: 'Rujukan Pihak MyBhakti. diisi n8n']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (contract_id, role) [unique]
   }
 
-  Note: 'Pihak penandatangan kontrak -- CUPLIKAN seperti tertulis, bukan data master. Satu orang muncul di banyak baris karena menandatangani banyak dokumen. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Pihak Kontrak. Pihak penandatangan kontrak seperti tertulis saat diteken -- bukan data master. Satu orang bisa muncul di banyak baris karena menandatangani banyak dokumen. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table contract_item [headercolor: #3498DB] {
   id bigint [pk, increment]
-  contract_id integer [not null]
-  line_no integer [not null, note: 'CHECK (line_no > 0)']
-  category text
-  description text [not null]
-  specification text
-  quantity numeric(18,2) [note: 'CHECK (quantity >= 0)']
-  unit text
-  period text
-  unit_price numeric(18,2) [note: 'selalu diverifikasi PM (hlm. 20); CHECK (unit_price >= 0)']
-  line_total numeric(18,2) [note: 'CHECK (line_total >= 0)']
-  remarks text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  contract_id integer [not null, note: 'ID Kontrak']
+  line_no integer [not null, note: 'No Urut. urutan baca di dokumen; CHECK (line_no > 0)']
+  category text [note: 'Kelompok']
+  description text [not null, note: 'Uraian']
+  specification text [note: 'Spesifikasi']
+  quantity numeric(18,2) [note: 'Volume; CHECK (quantity >= 0)']
+  unit text [note: 'Satuan']
+  period text [note: 'Periode']
+  unit_price numeric(18,2) [note: 'Harga Satuan. selalu dikonfirmasi PM (hlm. 20); CHECK (unit_price >= 0)']
+  line_total numeric(18,2) [note: 'Jumlah Harga; CHECK (line_total >= 0)']
+  remarks text [note: 'Keterangan']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (contract_id, line_no) [unique]
   }
 
-  Note: 'BoQ kontrak = kewajiban ke pelanggan (hlm. 7). SUMBER TUNGGAL rincian pekerjaan: SPH vendor, BAST, dan evidence menunjuk ke sini, tidak menyalin. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Rincian Kontrak. BoQ kontrak = kewajiban ke pelanggan (hlm. 7). Sumber tunggal rincian pekerjaan untuk BAST pelanggan. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table contract_requirement [headercolor: #3498DB] {
   id bigint [pk, increment]
-  contract_id integer [not null]
-  line_no integer [not null, note: 'CHECK (line_no > 0)']
-  requirement_type contract_requirement_requirement_type [not null, note: 'lampiran wajib / syarat serah terima / boleh parsial']
-  requirement_text text [not null, note: 'mis. \'Berita Acara Uji Terima\'']
-  clause_ref text [note: 'pasal rujukan, mis. \'Pasal 9 ayat 2\'']
-  evidence_quote text [note: 'kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  contract_id integer [not null, note: 'ID Kontrak']
+  line_no integer [not null, note: 'No Urut; CHECK (line_no > 0)']
+  requirement_type contract_requirement_requirement_type [not null, note: 'Jenis Syarat. lampiran wajib / syarat serah terima / boleh parsial']
+  requirement_text text [not null, note: 'Isi Syarat. mis. \'Berita Acara Uji Terima\'']
+  clause_ref text [note: 'Pasal Rujukan. mis. \'Pasal 9 ayat 2\'']
+  evidence_page integer [note: 'Halaman. halaman tempat syarat ini ditemukan']
+  evidence_quote text [note: 'Kutipan Dokumen. kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (contract_id, line_no) [unique]
   }
 
-  Note: '[2026.10.1] Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh CHECKLIST GABUNGAN; separuh lainnya evidence teknis milik Network Engineer (hlm. 15). Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Syarat Kontrak. Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table sph [headercolor: #3498DB] {
   id bigint [pk, increment]
-  document_id integer [not null, unique]
-  mybhakti_project_ref text [note: '[2026.10.1] proyek yang pengadaannya ditawar; diisi n8n']
-  mybhakti_vendor_ref text [note: '[2026.10.1] vendor penerbit di MyBhakti; diisi n8n']
-  sph_number text
-  sph_date_text text
-  sph_date date
-  project_name text [note: 'perihal / nama pekerjaan yang ditawarkan']
-  client_name text [note: 'instansi yang dituju surat']
-  vendor_name text [note: 'penerbit SPH seperti tertulis']
-  vendor_npwp text
-  subtotal_value numeric(18,2) [note: 'CHECK (subtotal_value >= 0)']
-  vat_percentage text [note: 'apa adanya di dokumen; sering berupa frasa']
-  vat_value numeric(18,2) [note: 'CHECK (vat_value >= 0)']
-  total_price numeric(18,2) [note: 'grand total; CHECK (total_price >= 0)']
-  validity_text text [note: 'masa berlaku penawaran, mis. \'30 hari\'']
-  payment_mechanism text
-  currency char(3) [not null, default: 'IDR', note: 'default IDR']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  document_id integer [not null, unique, note: 'ID Dokumen']
+  mybhakti_project_ref text [note: 'Rujukan Proyek MyBhakti. diisi n8n']
+  mybhakti_vendor_ref text [note: 'Rujukan Vendor MyBhakti. diisi n8n']
+  sph_number text [note: 'Nomor SPH']
+  sph_date_text text [note: 'Tanggal SPH Tertulis']
+  sph_date date [note: 'Tanggal SPH']
+  project_name text [note: 'Perihal. perihal / nama pekerjaan yang ditawarkan']
+  client_name text [note: 'Ditujukan Kepada. instansi yang dituju surat']
+  vendor_name text [note: 'Nama Vendor. penerbit SPH seperti tertulis']
+  vendor_npwp text [note: 'NPWP Vendor']
+  subtotal_value numeric(18,2) [note: 'Subtotal; CHECK (subtotal_value >= 0)']
+  vat_percentage text [note: 'Persentase PPN. apa adanya di dokumen']
+  vat_value numeric(18,2) [note: 'Nilai PPN; CHECK (vat_value >= 0)']
+  total_price numeric(18,2) [note: 'Total Penawaran. grand total; CHECK (total_price >= 0)']
+  validity_text text [note: 'Masa Berlaku. masa berlaku penawaran']
+  payment_mechanism text [note: 'Cara Pembayaran']
+  currency char(3) [not null, default: 'IDR', note: 'Mata Uang']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'SPH vendor (rantai hulu) -- lahir DARI kebutuhan kontrak, bukan dasar kontrak. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'SPH Vendor. Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table sph_item [headercolor: #3498DB] {
   id bigint [pk, increment]
-  sph_id integer [not null]
-  line_no integer [not null, note: 'CHECK (line_no > 0)']
-  contract_item_id integer [note: '[2026.10.1] item kontrak yang dipenuhi baris ini -- kunci price matching & tabel banding antar-vendor (Bulan 5)']
-  category text
-  description text [not null]
-  specification text
-  brand text
-  part_number text
-  quantity numeric(18,2) [note: 'CHECK (quantity >= 0)']
-  unit text
-  period text
-  unit_price numeric(18,2) [note: 'CHECK (unit_price >= 0)']
-  line_total numeric(18,2) [note: 'CHECK (line_total >= 0)']
-  remarks text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  sph_id integer [not null, note: 'ID SPH']
+  line_no integer [not null, note: 'No Urut. urutan baca, bukan kolom \'No\' di dokumen; CHECK (line_no > 0)']
+  category text [note: 'Kelompok']
+  description text [not null, note: 'Uraian']
+  specification text [note: 'Spesifikasi']
+  brand text [note: 'Merek']
+  part_number text [note: 'Nomor Part']
+  quantity numeric(18,2) [note: 'Volume; CHECK (quantity >= 0)']
+  unit text [note: 'Satuan']
+  period text [note: 'Periode']
+  unit_price numeric(18,2) [note: 'Harga Satuan. selalu dikonfirmasi PM (hlm. 20); CHECK (unit_price >= 0)']
+  line_total numeric(18,2) [note: 'Jumlah Harga; CHECK (line_total >= 0)']
+  remarks text [note: 'Keterangan']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (sph_id, line_no) [unique]
   }
 
-  Note: 'Baris penawaran vendor. Beberapa vendor menawar item kontrak yang sama -> dibandingkan lewat contract_item_id. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Rincian SPH. Baris penawaran vendor. Relasi ke barang yang dibeli (procurement item) untuk tabel banding harga dirancang di Bulan 5 -- belum ada di sini. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
-Table bast [headercolor: #3498DB] {
+Table bast [headercolor: #F1C40F] {
   id bigint [pk, increment]
-  document_id integer [not null, unique, note: 'UNIQUE -> 1:1 dengan document']
-  direction bast_direction [not null, note: 'customer = kita->pelanggan (acuan: kontrak); vendor = vendor->kita (acuan: PO) -- hlm. 10']
-  contract_id integer [note: 'hanya untuk direction=customer']
-  mybhakti_po_ref text [note: 'rujukan opak ke MyBhakti, diisi n8n -- SENGAJA bukan FK (hlm. 7)']
-  bast_number_customer text [note: 'nomor versi pelanggan']
-  bast_number_internal text [note: 'nomor versi BUT -- dari numbering service milik RPA (hlm. 20)']
-  handover_date_text text [note: 'apa adanya di dokumen']
-  handover_date date [note: 'hasil parse; NULL kalau gagal']
-  handover_city text
-  work_title text [not null]
-  basis_doc_type bast_basis_doc_type
-  basis_doc_number text [note: 'seperti tercetak']
-  basis_doc_date_text text
-  basis_doc_date date
-  basis_doc_value numeric(18,2) [note: 'CHECK (basis_doc_value >= 0)']
-  basis_doc_value_vat bast_basis_doc_value_vat
-  currency char(3) [not null, default: 'IDR', note: 'default IDR']
-  acceptance_statement text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  document_id integer [not null, unique, note: 'ID Dokumen']
+  direction bast_direction [not null, note: 'Arah. customer = kita->pelanggan (acuan: kontrak); vendor = vendor->kita (acuan: PO) -- hlm. 10']
+  contract_id integer [note: 'ID Kontrak. hanya untuk BAST pelanggan']
+  mybhakti_po_ref text [note: 'Rujukan PO MyBhakti. diisi n8n; bukan relasi']
+  bast_number_customer text [note: 'Nomor BAST Pelanggan']
+  bast_number_internal text [note: 'Nomor BAST Internal. dari numbering service milik RPA (hlm. 20)']
+  handover_date_text text [note: 'Tanggal Serah Terima Tertulis']
+  handover_date date [note: 'Tanggal Serah Terima']
+  handover_city text [note: 'Kota Serah Terima']
+  work_title text [note: 'Nama Pekerjaan']
+  basis_doc_type bast_basis_doc_type [note: 'Jenis Dokumen Dasar']
+  basis_doc_number text [note: 'Nomor Dokumen Dasar']
+  basis_doc_date_text text [note: 'Tanggal Dokumen Dasar Tertulis']
+  basis_doc_date date [note: 'Tanggal Dokumen Dasar']
+  basis_doc_value numeric(18,2) [note: 'Nilai Dokumen Dasar; CHECK (basis_doc_value >= 0)']
+  basis_doc_value_vat bast_basis_doc_value_vat [note: 'PPN Nilai Dasar']
+  currency char(3) [not null, default: 'IDR', note: 'Mata Uang']
+  acceptance_statement text [note: 'Pernyataan Penerimaan']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'BAST (hasil ekstraksi atau hasil generate). Pihak & nilai BAST pelanggan dibaca dari kontrak lewat contract_id. Kolom di sini hanya butir yang selalu/hampir selalu ada. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'BAST. DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. BAST hasil ekstraksi dokumen lama atau hasil susunan sistem. Ditulis oleh: USULAN, belum dibuat di NocoDB. Pemilik: AI Engineer'
 }
 
-Table bast_party [headercolor: #3498DB] {
+Table bast_party [headercolor: #F1C40F] {
   id bigint [pk, increment]
-  bast_id integer [not null]
-  role bast_party_role [not null, note: 'peran, BUKAN \'Pihak Pertama/Kedua\' -- label itu terbalik antar-format']
-  org_name_text text [not null, note: 'nama seperti ditandatangani']
-  signer_name text [not null]
-  signer_title text
-  org_address_text text
-  mybhakti_party_ref text [note: 'opak, diisi n8n']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  bast_id integer [not null, note: 'ID BAST']
+  role bast_party_role [not null, note: 'Peran. peran, BUKAN \'Pihak Pertama/Kedua\' -- label itu terbalik antar-format']
+  org_name_text text [not null, note: 'Nama Instansi']
+  signer_name text [note: 'Nama Penandatangan. kosong bila tidak terbaca']
+  signer_title text [note: 'Jabatan Penandatangan']
+  org_address_text text [note: 'Alamat']
+  mybhakti_party_ref text [note: 'Rujukan Pihak MyBhakti']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (bast_id, role) [unique]
   }
 
-  Note: 'Tepat 2 baris per BAST. Cuplikan saat penandatanganan -- jabatan berubah, dokumen yang sudah diteken tidak boleh ikut berubah. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Pihak BAST. DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Tepat 2 baris per BAST: penyerah dan penerima. Ditulis oleh: USULAN, belum dibuat di NocoDB. Pemilik: AI Engineer'
 }
 
-Table bast_item [headercolor: #3498DB] {
+Table bast_item [headercolor: #F1C40F] {
   id bigint [pk, increment]
-  bast_id integer [not null]
-  line_no integer [not null, note: 'CHECK (line_no > 0)']
-  contract_item_id integer [note: '[2026.10.1] baris BoQ kontrak yang diserahkan -- bila terisi, uraian & harga DIBACA dari contract_item, sehingga pasti sama dengan kontrak']
-  description text [not null]
-  quantity numeric(18,2) [note: 'CHECK (quantity >= 0)']
-  unit text
-  unit_price numeric(18,2) [note: 'CHECK (unit_price >= 0)']
-  line_total numeric(18,2) [note: 'CHECK (line_total >= 0)']
-  test_result text
-  activation_date_text text [note: '[2026.10.1] \'Tanggal Aktif\' apa adanya']
-  activation_date date [note: '[2026.10.1] hasil parse']
-  service_order_ref text [note: '[2026.10.1] \'No. AO\' layanan']
-  service_id text [note: '[2026.10.1] \'SID\' layanan']
-  location text [note: '[2026.10.1] lokasi pemasangan / layanan']
-  remarks text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  bast_id integer [not null, note: 'ID BAST']
+  line_no integer [not null, note: 'No Urut; CHECK (line_no > 0)']
+  contract_item_id integer [note: 'ID Rincian Kontrak. baris BoQ kontrak yang diserahkan; uraian & harga dibaca dari kontrak']
+  description text [not null, note: 'Uraian']
+  quantity numeric(18,2) [note: 'Volume. volume yang DISERAHKAN -- bisa lebih kecil dari kontrak bila parsial; CHECK (quantity >= 0)']
+  unit text [note: 'Satuan']
+  unit_price numeric(18,2) [note: 'Harga Satuan; CHECK (unit_price >= 0)']
+  line_total numeric(18,2) [note: 'Jumlah Harga; CHECK (line_total >= 0)']
+  test_result text [note: 'Hasil Uji. diisi setelah uji, bukan sebelumnya']
+  activation_date_text text [note: 'Tanggal Aktif Tertulis']
+  activation_date date [note: 'Tanggal Aktif']
+  service_order_ref text [note: 'Nomor AO']
+  service_id text [note: 'SID']
+  location text [note: 'Lokasi']
+  remarks text [note: 'Keterangan']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (bast_id, line_no) [unique]
   }
 
-  Note: 'Baris serah terima. Kolom [2026.10.1] adalah informasi yang baru ada di tahap serah terima (tanggal aktif, AO/SID, lokasi). Harga boleh NULL: format kampus/vendor/instansi tidak memuatnya. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Rincian BAST. DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Baris serah terima. Ditulis oleh: USULAN, belum dibuat di NocoDB. Pemilik: AI Engineer'
 }
 
-Table bast_condition [headercolor: #3498DB] {
+Table bast_condition [headercolor: #F1C40F] {
   id bigint [pk, increment]
-  bast_id integer [not null]
-  condition_type bast_condition_condition_type [not null]
-  value_text text
-  value_number numeric(18,2)
-  value_date date
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  bast_id integer [not null, note: 'ID BAST']
+  condition_type bast_condition_condition_type [not null, note: 'Jenis Kondisi']
+  value_text text [note: 'Nilai Teks']
+  value_number numeric(18,2) [note: 'Nilai Angka']
+  value_date date [note: 'Nilai Tanggal']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'Fakta tambahan BAST sebagai BARIS. Fakta baru = nilai condition_type baru, bukan kolom baru. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Kondisi BAST. DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Fakta tambahan BAST sebagai baris, bukan kolom baru. Ditulis oleh: USULAN, belum dibuat di NocoDB. Pemilik: AI Engineer'
 }
 
-Table bast_draft [headercolor: #27AE60] {
+Table bast_draft [headercolor: #F1C40F] {
   id bigint [pk, increment]
-  contract_id integer [not null]
-  draft_bast_number text
-  work_title text [not null]
-  handover_date_text text
-  handover_date date
-  handover_city text
-  status bast_draft_status [not null]
-  template_name text [note: 'format_telkom | format_kampus | format_instansi']
-  acceptance_statement text
-  generated_doc_url text
-  generated_bast_id integer [note: 'terisi saat status=generated; tanpa ini, kontrak yang di-generate ulang membuat PM tidak tahu draf mana menghasilkan BAST yang mana']
-  approved_by text [note: '[DIISI PM] HANYA diisi manusia (PM)']
-  approved_at timestamptz [note: '[DIISI PM] HANYA diisi manusia (PM)']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  contract_id integer [not null, note: 'ID Kontrak']
+  draft_bast_number text [note: 'Nomor Draf']
+  work_title text [not null, note: 'Nama Pekerjaan']
+  handover_date_text text [note: 'Tanggal Serah Terima Tertulis']
+  handover_date date [note: 'Tanggal Serah Terima']
+  handover_city text [note: 'Kota Serah Terima']
+  status bast_draft_status [not null, note: 'Status']
+  template_name text [note: 'Template']
+  acceptance_statement text [note: 'Pernyataan Penerimaan']
+  generated_doc_url text [note: 'Tautan Dokumen']
+  generated_bast_id integer [note: 'ID BAST Tercetak']
+  approved_by text [note: '[DIISI PM] Disetujui Oleh']
+  approved_at timestamptz [note: '[DIISI PM] Waktu Disetujui']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'Draf BAST pelanggan dari kontrak terverifikasi. Nomor dari numbering service, render oleh dol-render (RPA), lampiran oleh compiler BAST (Network). Ditulis oleh: mesin (pipeline). Pemilik: RPA Engineer'
+  Note: 'Draf BAST. DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) di workshop skema. Belum punya kunci anti-dobel: wajib diputuskan sebelum berlaku, karena tanpa kunci, pengiriman ulang menghapus persetujuan PM. Ditulis oleh: USULAN, belum dibuat di NocoDB. Pemilik: RPA Engineer'
 }
 
-Table evidence_photo [headercolor: #8E44AD] {
+Table evidence_photo [headercolor: #F1C40F] {
   id bigint [pk, increment]
-  odk_instance_id text [not null, unique, note: 'ID submission ODK Central -- sinkron ulang = update, bukan baris kembar']
-  contract_item_id integer [not null, note: 'baris BoQ kontrak yang dibuktikan foto ini']
-  requirement_id integer [note: 'lampiran wajib kontrak yang dipenuhi (bila ada) -- sambungan checklist gabungan']
-  component_label text [note: 'mis. \'4 Unit Switch\', \'1 Unit Router\'']
-  photo_type evidence_photo_photo_type [not null, note: 'foto barang / label serial number / pemasangan / tangkapan layar']
-  serial_number text [note: 'wajib untuk foto label SN; bahan registry aset & garansi (Bulan 6)']
-  photo_url text [not null]
-  taken_at timestamptz [not null, note: 'waktu pengambilan foto']
-  gps_lat numeric(9,6) [note: 'lintang, mis. -7.347824']
-  gps_lon numeric(9,6) [note: 'bujur, mis. 108.232318']
-  auto_check_notes text [note: 'catatan pemeriksaan otomatis n8n, mis. \'jarak 120 m dari lokasi proyek\'']
-  review_status evidence_photo_review_status [not null, default: 'pending', note: '[DIISI PM] pending = belum dicek. HANYA PM yang mengubah']
-  reviewed_by text [note: '[DIISI PM] HANYA diisi PM']
-  reviewed_at timestamptz [note: '[DIISI PM] HANYA diisi PM']
-  review_note text [note: '[DIISI PM] alasan bila ditolak, mis. \'SN tidak terbaca\'']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  odk_instance_id text [not null, unique, note: 'ID Kiriman ODK. sinkron ulang = pembaruan, bukan baris kembar']
+  contract_item_id integer [not null, note: 'ID Rincian Kontrak']
+  requirement_id integer [note: 'ID Syarat Kontrak']
+  component_label text [note: 'Komponen. mis. \'4 Unit Switch\'']
+  photo_type evidence_photo_photo_type [not null, note: 'Jenis Foto']
+  serial_number text [note: 'Nomor Seri']
+  photo_url text [not null, note: 'Tautan Foto']
+  taken_at timestamptz [not null, note: 'Waktu Foto']
+  gps_lat numeric(9,6) [note: 'Lintang']
+  gps_lon numeric(9,6) [note: 'Bujur']
+  auto_check_notes text [note: 'Catatan Cek Otomatis']
+  review_status evidence_photo_review_status [not null, default: 'pending', note: '[DIISI PM] Status Review']
+  reviewed_by text [note: '[DIISI PM] Diperiksa Oleh']
+  reviewed_at timestamptz [note: '[DIISI PM] Waktu Diperiksa']
+  review_note text [note: '[DIISI PM] Catatan Review']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: '[2026.10.1] USULAN untuk disepakati dengan Network Engineer (wilayah dol-odk & dol-bast-compiler, hlm. 15). Foto masuk lewat n8n dari ODK Central SETELAH lolos pemeriksaan otomatis (GPS ada, dalam radius lokasi, dalam masa kontrak); PM lalu menyetujui/menolak di NocoDB. Lampiran BAST hanya memakai review_status=approved. Ditulis oleh: mesin (pipeline). Pemilik: Network Engineer'
+  Note: 'Foto Evidence. DITUNDA: usulan untuk disepakati dengan Network Engineer (dol-odk & dol-bast-compiler, hlm. 15). Lampiran wajib kontrak sering berupa DOKUMEN (BA uji terima, surat jalan), bukan foto -- bentuk tabel bukti perlu dibahas bersama. Ditulis oleh: USULAN, belum dibuat di NocoDB. Pemilik: Network Engineer'
 }
 
 Table extracted_field [headercolor: #3498DB] {
   id bigint [pk, increment]
-  document_id integer [not null]
-  field_path text [not null, note: 'mis. contract.Nomor Kontrak Kerja']
-  ai_value_text text
-  evidence_page integer [note: 'dihitung deterministik, BUKAN ditulis LLM']
-  evidence_quote text [note: 'potongan teks dokumen yang cocok']
-  evidence_score numeric(18,2) [note: '0-1: seberapa persis nilai ditemukan di teks dokumen']
-  system_status extracted_field_system_status [not null, note: 'saran sistem, BUKAN persetujuan']
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  document_id integer [not null, note: 'ID Dokumen']
+  field_path text [not null, note: 'Nama Field. mis. \'Nomor Kontrak Kerja\' atau \'List Item/Barang[0].Harga Satuan\'']
+  ai_value_text text [note: 'Nilai Terbaca Sistem']
+  evidence_page integer [note: 'Halaman Bukti. dihitung sistem, bukan ditulis LLM']
+  evidence_quote text [note: 'Kutipan Bukti. potongan teks dokumen tempat nilai ditemukan']
+  evidence_score numeric(18,2) [note: 'Skor Bukti. 0-1: seberapa persis nilai ditemukan di teks dokumen']
+  system_status extracted_field_system_status [not null, note: 'Status Bukti. saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (document_id, field_path) [unique]
   }
 
-  Note: 'Satu baris per field: nilai ekstraksi + skor + bukti. Antrean kerja PM. Ditulis mesin saja; nilai terbaru per field. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+  Note: 'Hasil Ekstraksi. Satu baris per field: nilai terbaca + bukti. Antrean kerja PM. Ditulis mesin saja; dokumen yang sudah mulai diperiksa PM tidak ditimpa otomatis. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table field_review [headercolor: #E67E22] {
   id bigint [pk, increment]
-  document_id integer [not null, note: 'RESTRICT: dokumen dengan keputusan PM tidak boleh terhapus diam-diam']
-  field_path text [not null]
-  reviewed_ai_value_text text [note: 'nilai AI yang DILIHAT PM saat memutuskan; kalau nilai AI berubah, konfirmasi lama tidak berlaku untuk nilai baru']
-  decision field_review_decision [not null]
-  final_value_text text
-  reviewed_by text [not null]
-  reviewed_at timestamptz [not null]
-  reviewer_note text
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  document_id integer [not null, note: 'ID Dokumen. dokumen dengan keputusan PM tidak boleh terhapus diam-diam']
+  field_path text [not null, note: 'Nama Field']
+  reviewed_ai_value_text text [note: 'Nilai Sistem Saat Diperiksa. nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru']
+  decision field_review_decision [not null, note: 'Keputusan']
+  final_value_text text [note: 'Nilai Final. wajib diisi bila dikoreksi']
+  reviewed_by text [not null, note: 'Diperiksa Oleh']
+  reviewed_at timestamptz [not null, note: 'Waktu Diperiksa']
+  reviewer_note text [note: 'Catatan PM']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
   indexes {
     (document_id, field_path) [unique]
   }
 
-  Note: 'Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Ditulis oleh: MANUSIA (PM) -- pipeline tidak pernah menulis ke sini. Pemilik: PM'
+  Note: 'Keputusan PM. Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini. Ditulis oleh: MANUSIA (PM) -- pipeline tidak pernah menulis ke sini. Pemilik: PM'
 }
 
 Table extraction_run [headercolor: #7F8C8D] {
   id bigint [pk, increment]
-  document_id integer [not null]
-  ocr_engine text
-  llm_model text
-  prompt_version text
-  schema_version text
-  llm_call_count integer
-  parse_seconds numeric(18,2)
-  extract_seconds numeric(18,2)
-  validation_status text
-  started_at timestamptz
-  created_at timestamptz [not null, default: `now()`, note: 'UTC']
-  updated_at timestamptz [not null, default: `now()`, note: 'UTC, diperbarui trigger']
+  document_id integer [not null, note: 'ID Dokumen']
+  ocr_engine text [note: 'Mesin OCR']
+  llm_model text [note: 'Model LLM']
+  prompt_version text [note: 'Versi Prompt']
+  schema_version text [note: 'Versi Skema']
+  llm_call_count integer [note: 'Jumlah Panggilan LLM']
+  parse_seconds numeric(18,2) [note: 'Detik Pembacaan']
+  extract_seconds numeric(18,2) [note: 'Detik Ekstraksi']
+  validation_status text [note: 'Status Validasi']
+  started_at timestamptz [note: 'Mulai']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
-  Note: 'Jejak tiap pemrosesan -- dasar bukti \'Terukur\' (hlm. 21). Hanya di PostgreSQL: NocoDB hanya memuat nilai ekstraksi + confidence, bukan metadata teknis AI. Ditulis oleh: mesin -- hanya PostgreSQL, TIDAK dikirim ke NocoDB. Pemilik: AI Engineer'
+  Note: 'Riwayat Pemrosesan. Jejak tiap pemrosesan -- dasar bukti \'Terukur\' (hlm. 21). Hanya di PostgreSQL. Ditulis oleh: mesin -- hanya PostgreSQL, TIDAK dikirim ke NocoDB. Pemilik: AI Engineer'
 }
 
 // ---------------------------------------------------------------- relasi
@@ -359,7 +361,6 @@ Ref: contract_item.contract_id > contract.id [delete: cascade]
 Ref: contract_requirement.contract_id > contract.id [delete: cascade]
 Ref: sph.document_id - document.id [delete: cascade]
 Ref: sph_item.sph_id > sph.id [delete: cascade]
-Ref: sph_item.contract_item_id > contract_item.id [delete: restrict]
 Ref: bast.document_id - document.id [delete: cascade]
 Ref: bast.contract_id > contract.id [delete: restrict]
 Ref: bast_party.bast_id > bast.id [delete: cascade]
@@ -376,7 +377,7 @@ Ref: extraction_run.document_id > document.id [delete: cascade]
 
 // ---------------------------------------------------------------- pilihan nilai
 Enum document_doc_type {
-  contract
+  kontrak
   sph
   bast
 }
@@ -387,20 +388,18 @@ Enum contract_contract_type {
   spk
   kontrak_kerja_sama
   pks
-  other
+  lainnya
 }
 
 Enum contract_party_role {
-  first_party
-  second_party
-  client
-  contractor
+  pemberi_kerja
+  pelaksana
 }
 
 Enum contract_requirement_requirement_type {
-  mandatory_attachment
-  handover_condition
-  partial_delivery
+  lampiran_wajib
+  syarat_serah_terima
+  boleh_parsial
 }
 
 Enum bast_direction {
@@ -460,18 +459,18 @@ Enum evidence_photo_review_status {
 }
 
 Enum extracted_field_system_status {
-  auto_verified
-  auto_accepted
-  review_required
-  unsupported
-  conflict
-  missing
+  bukti_kuat
+  bukti_cukup
+  perlu_dicek
+  tidak_ada_di_dokumen
+  bertentangan
+  kosong
 }
 
 Enum field_review_decision {
-  confirmed
-  corrected
-  rejected
+  benar
+  dikoreksi
+  ditolak
 }
 
 // ---------------------------------------------------------------- kelompok
