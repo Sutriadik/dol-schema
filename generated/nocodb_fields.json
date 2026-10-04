@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.2",
+  "schema_version": "companion-2026.10.3",
   "tables": {
     "document": {
       "title": "Dokumen",
@@ -247,11 +247,6 @@
           "uidt": "LongText"
         },
         {
-          "column_name": "npwp",
-          "title": "NPWP",
-          "uidt": "SingleLineText"
-        },
-        {
           "column_name": "mybhakti_party_ref",
           "title": "Rujukan Pihak MyBhakti",
           "uidt": "SingleLineText",
@@ -429,11 +424,6 @@
           "title": "Nama Vendor",
           "uidt": "SingleLineText",
           "description": "penerbit SPH seperti tertulis"
-        },
-        {
-          "column_name": "vendor_npwp",
-          "title": "NPWP Vendor",
-          "uidt": "SingleLineText"
         },
         {
           "column_name": "subtotal_value",

@@ -38,6 +38,17 @@ Langkah setiap perubahan skema:
 
 Belum ada perubahan.
 
+## [companion-2026.10.3] — 2026-10-04
+
+### Dihapus — dampak: **perlu penyesuaian**
+- `contract_party.npwp` dan `sph.vendor_npwp`. NPWP tidak dipakai di BAST maupun di
+  verifikasi PM, jadi tidak disimpan (keputusan pengguna). dol-parser tetap meminta NPWP
+  di prompt LLM: menghapusnya dari prompt diukur menurunkan akurasi field lain (lenient
+  0,884 -> 0,858; nilai salah yang lolos 4 -> 8), jadi pemeta yang membuangnya.
+  Konsekuensi untuk n8n: pencocokan vendor SPH ke data vendor MyBhakti
+  (`sph.mybhakti_vendor_ref`) hanya bisa lewat nama vendor, yang ejaannya sering berbeda
+  antar-dokumen. Base NocoDB 2026.10.2 belum pernah dibuat, jadi tidak ada data yang hilang.
+
 ## [companion-2026.10.2] — 2026-10-02
 
 Fokus: hanya yang sudah pasti yang berlaku; semua yang terlihat orang kantor berbahasa

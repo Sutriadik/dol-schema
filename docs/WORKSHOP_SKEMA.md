@@ -11,7 +11,7 @@
 
 ## Yang sudah berlaku (tidak perlu diputuskan ulang)
 
-Versi `companion-2026.10.2`. Rinciannya di [`generated/KAMUS_DATA.md`](../generated/KAMUS_DATA.md).
+Versi `companion-2026.10.3`. Rinciannya di [`generated/KAMUS_DATA.md`](../generated/KAMUS_DATA.md).
 
 | Tabel (judul NocoDB) | Isi | Penulis |
 |---|---|---|

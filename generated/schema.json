@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.2",
+  "schema_version": "companion-2026.10.3",
   "insert_order": [
     "document",
     "contract",
@@ -439,13 +439,6 @@
           "required": false
         },
         {
-          "name": "npwp",
-          "label": "NPWP",
-          "type": "text",
-          "nocodb_type": "SingleLineText",
-          "required": false
-        },
-        {
           "name": "mybhakti_party_ref",
           "label": "Rujukan Pihak MyBhakti",
           "type": "text",
@@ -816,13 +809,6 @@
           "nocodb_type": "SingleLineText",
           "required": false,
           "note": "penerbit SPH seperti tertulis"
-        },
-        {
-          "name": "vendor_npwp",
-          "label": "NPWP Vendor",
-          "type": "text",
-          "nocodb_type": "SingleLineText",
-          "required": false
         },
         {
           "name": "subtotal_value",

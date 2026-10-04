@@ -34,7 +34,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-SCHEMA_VERSION = "companion-2026.10.2"
+SCHEMA_VERSION = "companion-2026.10.3"
 
 # Pemilik tabel menurut briefing hlm. 12-15. Yang merancang & memelihara isi tabelnya.
 OWNERS = {
@@ -206,7 +206,6 @@ CONTRACT_PARTY = Table(
         Column("signer_name", "text", "Nama Penandatangan", note="kosong bila tidak terbaca"),
         Column("signer_title", "text", "Jabatan Penandatangan"),
         Column("org_address_text", "text", "Alamat"),
-        Column("npwp", "text", "NPWP"),
         Column("mybhakti_party_ref", "text", "Rujukan Pihak MyBhakti", note="diisi n8n"),
         *_AUDIT,
     ],
@@ -274,7 +273,6 @@ SPH = Table(
         Column("project_name", "text", "Perihal", note="perihal / nama pekerjaan yang ditawarkan"),
         Column("client_name", "text", "Ditujukan Kepada", note="instansi yang dituju surat"),
         Column("vendor_name", "text", "Nama Vendor", note="penerbit SPH seperti tertulis"),
-        Column("vendor_npwp", "text", "NPWP Vendor"),
         Column("subtotal_value", "numeric", "Subtotal", check="subtotal_value >= 0"),
         Column("vat_percentage", "text", "Persentase PPN", note="apa adanya di dokumen"),
         Column("vat_value", "numeric", "Nilai PPN", check="vat_value >= 0"),

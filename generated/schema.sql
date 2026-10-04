@@ -1,5 +1,5 @@
 -- Delivery Ops Layer — skema companion (tabel yang BERLAKU)
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.2).
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.3).
 -- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.
 
 -- Menjaga updated_at tetap benar tanpa bergantung pada aplikasi yang menulis.
@@ -123,7 +123,6 @@ CREATE TABLE IF NOT EXISTS contract_party (
     signer_name                text,
     signer_title               text,
     org_address_text           text,
-    npwp                       text,
     mybhakti_party_ref         text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
@@ -142,7 +141,6 @@ COMMENT ON COLUMN contract_party.org_name_text IS 'Nama Instansi';
 COMMENT ON COLUMN contract_party.signer_name IS 'Nama Penandatangan -- kosong bila tidak terbaca';
 COMMENT ON COLUMN contract_party.signer_title IS 'Jabatan Penandatangan';
 COMMENT ON COLUMN contract_party.org_address_text IS 'Alamat';
-COMMENT ON COLUMN contract_party.npwp IS 'NPWP';
 COMMENT ON COLUMN contract_party.mybhakti_party_ref IS 'Rujukan Pihak MyBhakti -- diisi n8n';
 COMMENT ON COLUMN contract_party.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN contract_party.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
@@ -241,7 +239,6 @@ CREATE TABLE IF NOT EXISTS sph (
     project_name               text,
     client_name                text,
     vendor_name                text,
-    vendor_npwp                text,
     subtotal_value             numeric(18,2),
     vat_percentage             text,
     vat_value                  numeric(18,2),
@@ -268,7 +265,6 @@ COMMENT ON COLUMN sph.sph_date IS 'Tanggal SPH';
 COMMENT ON COLUMN sph.project_name IS 'Perihal -- perihal / nama pekerjaan yang ditawarkan';
 COMMENT ON COLUMN sph.client_name IS 'Ditujukan Kepada -- instansi yang dituju surat';
 COMMENT ON COLUMN sph.vendor_name IS 'Nama Vendor -- penerbit SPH seperti tertulis';
-COMMENT ON COLUMN sph.vendor_npwp IS 'NPWP Vendor';
 COMMENT ON COLUMN sph.subtotal_value IS 'Subtotal';
 COMMENT ON COLUMN sph.vat_percentage IS 'Persentase PPN -- apa adanya di dokumen';
 COMMENT ON COLUMN sph.vat_value IS 'Nilai PPN';

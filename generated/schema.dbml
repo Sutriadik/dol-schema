@@ -1,5 +1,5 @@
 // Open ADE — Delivery Ops Layer: skema companion NocoDB
-// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.2).
+// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.3).
 // JANGAN diedit tangan: ubah model.py lalu jalankan `python -m dol_schema --emit`.
 // Buka di dbdiagram.io (tempel isi berkas ini) atau ekstensi DBML di VS Code.
 
@@ -64,7 +64,6 @@ Table contract_party [headercolor: #3498DB] {
   signer_name text [note: 'Nama Penandatangan. kosong bila tidak terbaca']
   signer_title text [note: 'Jabatan Penandatangan']
   org_address_text text [note: 'Alamat']
-  npwp text [note: 'NPWP']
   mybhakti_party_ref text [note: 'Rujukan Pihak MyBhakti. diisi n8n']
   created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
   updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
@@ -129,7 +128,6 @@ Table sph [headercolor: #3498DB] {
   project_name text [note: 'Perihal. perihal / nama pekerjaan yang ditawarkan']
   client_name text [note: 'Ditujukan Kepada. instansi yang dituju surat']
   vendor_name text [note: 'Nama Vendor. penerbit SPH seperti tertulis']
-  vendor_npwp text [note: 'NPWP Vendor']
   subtotal_value numeric(18,2) [note: 'Subtotal; CHECK (subtotal_value >= 0)']
   vat_percentage text [note: 'Persentase PPN. apa adanya di dokumen']
   vat_value numeric(18,2) [note: 'Nilai PPN; CHECK (vat_value >= 0)']

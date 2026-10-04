@@ -1,6 +1,6 @@
 # Kamus Data — Delivery Ops Layer
 
-Versi skema **companion-2026.10.2**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
+Versi skema **companion-2026.10.3**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
 
 Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan
 **nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,
@@ -138,7 +138,6 @@ Pihak penandatangan kontrak seperti tertulis saat diteken -- bukan data master. 
 | **Nama Penandatangan** | `signer_name` | teks |  | sistem | kosong bila tidak terbaca |
 | **Jabatan Penandatangan** | `signer_title` | teks |  | sistem |  |
 | **Alamat** | `org_address_text` | teks |  | sistem |  |
-| **NPWP** | `npwp` | teks |  | sistem |  |
 | **Rujukan Pihak MyBhakti** | `mybhakti_party_ref` | teks |  | sistem | diisi n8n |
 
 ### Rincian Kontrak (`contract_item`)
@@ -213,7 +212,6 @@ Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak.
 | **Perihal** | `project_name` | teks |  | sistem | perihal / nama pekerjaan yang ditawarkan |
 | **Ditujukan Kepada** | `client_name` | teks |  | sistem | instansi yang dituju surat |
 | **Nama Vendor** | `vendor_name` | teks |  | sistem | penerbit SPH seperti tertulis |
-| **NPWP Vendor** | `vendor_npwp` | teks |  | sistem |  |
 | **Subtotal** | `subtotal_value` | angka |  | sistem |  |
 | **Persentase PPN** | `vat_percentage` | teks |  | sistem | apa adanya di dokumen |
 | **Nilai PPN** | `vat_value` | angka |  | sistem |  |

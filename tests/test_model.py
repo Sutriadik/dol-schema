@@ -167,3 +167,11 @@ def test_artefak_generated_sesuai_model():
     basi = [p.name for p, isi in _artifacts().items()
             if not p.exists() or p.read_text(encoding="utf-8") != isi]
     assert basi == [], f"jalankan `python -m dol_schema --emit`: {basi}"
+
+
+def test_npwp_tidak_disimpan():
+    """Keputusan 2026.10.3: NPWP tidak dipakai BAST maupun verifikasi PM, jadi tidak disimpan.
+    Menambahkannya lagi harus disengaja (ubah tes ini), bukan terbawa diam-diam."""
+    for t in ALL_TABLES:
+        for c in t.columns:
+            assert "npwp" not in c.name.lower(), f"{t.name}.{c.name}"
