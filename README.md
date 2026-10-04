@@ -24,6 +24,9 @@ dibangkitkan darinya:
 | `generated/schema_usulan.sql` | PostgreSQL — tabel **usulan** (ditunda), untuk workshop |
 | `generated/schema.dbml` | diagram (dbdiagram.io / ekstensi dbdiagram) |
 | `docs/ERD.md` | penjelasan desain & lembar persetujuan untuk PM dan mentor |
+| `docs/WORKSHOP_SKEMA.md` | keputusan skema yang masih terbuka, untuk dibahas bertiga |
+| `AGENTS.md` | aturan untuk agen AI yang mengubah skema |
+| `../dol-parser/docs/proyek/` | dokumen proyek lengkap (KAK, PRD, SRS, SDD, rencana uji) |
 
 Semua berkas di `generated/` dibangkitkan — jangan diedit tangan; ubah `model.py` lalu
 `--emit`. (`generated/schema.dbdiagram` adalah pengecualian: tata letak diagram yang disimpan
