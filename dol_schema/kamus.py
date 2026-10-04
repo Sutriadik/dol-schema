@@ -5,22 +5,36 @@ Untuk PM dan ketiga tim (briefing hlm. 21: "orang lain bisa memahami, menjalanka
 mengubahnya tanpa bertanya"). Ditulis dari model, bukan tangan, supaya tidak pernah berbeda
 dari tabel yang sebenarnya; `python -m dol_schema --check` gagal bila kamus ini basi.
 """
+
 from __future__ import annotations
 
-from typing import List
-
 from dol_schema.model import (
-    ALL_TABLES, AUDIT_COLUMNS, DOMAINS, OWNERS, SCHEMA_VERSION, Column, Table,
-    insert_order, natural_key, tables_with_status,
+    ALL_TABLES,
+    AUDIT_COLUMNS,
+    DOMAINS,
+    OWNERS,
+    SCHEMA_VERSION,
+    Column,
+    Table,
+    insert_order,
+    natural_key,
+    tables_with_status,
 )
 
 _TYPE_LABEL = {
-    "text": "teks", "int": "angka bulat", "numeric": "angka", "coord": "koordinat GPS",
-    "date": "tanggal", "timestamptz": "tanggal & jam", "char3": "kode 3 huruf",
+    "text": "teks",
+    "int": "angka bulat",
+    "numeric": "angka",
+    "coord": "koordinat GPS",
+    "date": "tanggal",
+    "timestamptz": "tanggal & jam",
+    "char3": "kode 3 huruf",
 }
 _DOMAIN_INTRO = {
     "dokumen": "Setiap berkas PDF yang masuk.",
-    "kontrak": "Kontrak/SPK pelanggan — sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11).",
+    "kontrak": (
+        "Kontrak/SPK pelanggan — sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11)."
+    ),
     "sph": "Penawaran vendor yang lahir dari kebutuhan kontrak (rantai hulu).",
     "bast": "Serah terima. BAST pelanggan dibaca dari kontrak; nomor & render oleh RPA.",
     "evidence": "Foto bukti lapangan dari ODK Central (wilayah Network Engineer).",
@@ -53,16 +67,20 @@ def _column_row(t: Table, c: Column) -> str:
     keterangan = c.note.replace("|", "/")
     if c.fk:
         induk = c.fk.split(".")[0]
-        keterangan = f"→ {next(x.label for x in ALL_TABLES if x.name == induk)}. {keterangan}".strip()
+        keterangan = (
+            f"→ {next(x.label for x in ALL_TABLES if x.name == induk)}. {keterangan}".strip()
+        )
     if c.enum:
         keterangan = f"{keterangan} Pilihan: {', '.join(f'`{v}`' for v in c.enum)}.".strip()
     if c.unique:
         keterangan = f"unik. {keterangan}".strip()
-    return (f"| **{c.label}** | `{c.name}` | {_TYPE_LABEL[c.type]} | {wajib} | {pengisi} | "
-            f"{keterangan} |")
+    return (
+        f"| **{c.label}** | `{c.name}` | {_TYPE_LABEL[c.type]} | {wajib} | {pengisi} | "
+        f"{keterangan} |"
+    )
 
 
-def _table_section(t: Table) -> List[str]:
+def _table_section(t: Table) -> list[str]:
     key = natural_key(t)
     induk = sorted({c.fk.split(".")[0] for c in t.columns if c.fk})
     label_induk = [next(x.label for x in ALL_TABLES if x.name == n) for n in induk]
@@ -72,25 +90,33 @@ def _table_section(t: Table) -> List[str]:
         di_nocodb = "belum — tabel usulan"
     else:
         di_nocodb = "tidak (hanya PostgreSQL)"
-    lines = [f"### {t.label} (`{t.name}`)", "", t.note, "",
-             f"- **Status:** {t.status}",
-             f"- **Pemilik:** {OWNERS[t.owner]}",
-             f"- **Diisi oleh:** {'PM (manusia)' if t.written_by == 'human' else 'sistem'}"
-             + (f"; kolom milik PM: {', '.join(t.column(c).label for c in t.human_columns())}"
-                if t.human_columns() and t.written_by != "human" else ""),
-             f"- **Tampil di NocoDB:** {di_nocodb}",
-             f"- **Kunci anti-dobel:** "
-             + (" + ".join(t.column(k).label for k in key) if key else "— (belum ada)"),
-             f"- **Induk:** {', '.join(label_induk) if label_induk else '—'}",
-             "",
-             "| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |",
-             "|---|---|---|---|---|---|"]
+    lines = [
+        f"### {t.label} (`{t.name}`)",
+        "",
+        t.note,
+        "",
+        f"- **Status:** {t.status}",
+        f"- **Pemilik:** {OWNERS[t.owner]}",
+        f"- **Diisi oleh:** {'PM (manusia)' if t.written_by == 'human' else 'sistem'}"
+        + (
+            f"; kolom milik PM: {', '.join(t.column(c).label for c in t.human_columns())}"
+            if t.human_columns() and t.written_by != "human"
+            else ""
+        ),
+        f"- **Tampil di NocoDB:** {di_nocodb}",
+        "- **Kunci anti-dobel:** "
+        + (" + ".join(t.column(k).label for k in key) if key else "— (belum ada)"),
+        f"- **Induk:** {', '.join(label_induk) if label_induk else '—'}",
+        "",
+        "| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |",
+        "|---|---|---|---|---|---|",
+    ]
     lines += [_column_row(t, c) for c in t.columns if c.name not in AUDIT_COLUMNS]
     return lines + [""]
 
 
-def _sections(tables: List[Table]) -> List[str]:
-    out: List[str] = []
+def _sections(tables: list[Table]) -> list[str]:
+    out: list[str] = []
     for d in DOMAINS:
         members = [t for t in tables if t.domain == d]
         if not members:
@@ -123,20 +149,30 @@ def to_kamus() -> str:
         "|---|---|---|---|---|---|",
     ]
     for t in ALL_TABLES:
-        out.append(f"| **{t.label}** | `{t.name}` | {t.status} | {OWNERS[t.owner]} | "
-                   f"{'PM' if t.written_by == 'human' else 'sistem'} | "
-                   f"{'ya' if t.in_nocodb else 'tidak'} |")
+        out.append(
+            f"| **{t.label}** | `{t.name}` | {t.status} | {OWNERS[t.owner]} | "
+            f"{'PM' if t.written_by == 'human' else 'sistem'} | "
+            f"{'ya' if t.in_nocodb else 'tidak'} |"
+        )
     urutan = [n for n in insert_order() if any(t.name == n for t in berlaku)]
-    out += ["",
-            "Urutan pengisian tabel yang berlaku (induk dulu): "
-            + " → ".join(next(t.label for t in berlaku if t.name == n) for n in urutan),
-            "", _ALUR_PM,
-            "## Tabel yang berlaku", ""]
+    out += [
+        "",
+        "Urutan pengisian tabel yang berlaku (induk dulu): "
+        + " → ".join(next(t.label for t in berlaku if t.name == n) for n in urutan),
+        "",
+        _ALUR_PM,
+        "## Tabel yang berlaku",
+        "",
+    ]
     out += _sections(berlaku)
-    out += ["## Tabel usulan (ditunda)", "",
-            "Belum dibuat di NocoDB. Menunggu kesepakatan bersama RPA Engineer (nomor & render",
-            "BAST) dan Network Engineer (evidence & lampiran). DDL-nya ada di",
-            "`generated/schema_usulan.sql` untuk dibahas di workshop skema.",
-            "Pilihan nilainya sengaja belum diterjemahkan: diputuskan saat disepakati.", ""]
+    out += [
+        "## Tabel usulan (ditunda)",
+        "",
+        "Belum dibuat di NocoDB. Menunggu kesepakatan bersama RPA Engineer (nomor & render",
+        "BAST) dan Network Engineer (evidence & lampiran). DDL-nya ada di",
+        "`generated/schema_usulan.sql` untuk dibahas di workshop skema.",
+        "Pilihan nilainya sengaja belum diterjemahkan: diputuskan saat disepakati.",
+        "",
+    ]
     out += _sections(ditunda)
     return "\n".join(out).rstrip() + "\n"

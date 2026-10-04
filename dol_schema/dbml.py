@@ -14,9 +14,8 @@ Yang sengaja ikut digambar karena itu keputusan desain, bukan detail:
 - **Aksi ON DELETE.** RESTRICT menandai baris yang tidak boleh ikut terhapus diam-diam.
 - **Kolom `*_ref` MyBhakti** tampil sebagai kolom biasa, TANPA garis relasi: sengaja bukan FK.
 """
-from __future__ import annotations
 
-from typing import Dict, List
+from __future__ import annotations
 
 from dol_schema.ddl import _PG_TYPE
 from dol_schema.model import ALL_TABLES, DOMAINS, OWNERS, SCHEMA_VERSION, Column, Table
@@ -37,7 +36,7 @@ def _enum_name(t: Table, c: Column) -> str:
 
 
 def _column_line(t: Table, c: Column) -> str:
-    settings: List[str] = []
+    settings: list[str] = []
     if not c.null:
         settings.append("not null")
     if c.unique:
@@ -72,8 +71,7 @@ def _table_block(t: Table) -> str:
     else:
         color = _OWNER_COLOR[t.owner] if t.nocodb else _COLOR_INTERNAL
     penulis = f"{penulis}. Pemilik: {OWNERS[t.owner]}"
-    lines = [f"Table {t.name} [headercolor: {color}] {{",
-             "  id bigint [pk, increment]"]
+    lines = [f"Table {t.name} [headercolor: {color}] {{", "  id bigint [pk, increment]"]
     lines += [_column_line(t, c) for c in t.columns]
     if t.unique_together:
         lines.append("")
@@ -82,12 +80,13 @@ def _table_block(t: Table) -> str:
             lines.append(f"    ({', '.join(cols)}) [unique]")
         lines.append("  }")
     lines.append("")
-    lines.append(f"  Note: {_q(t.label + '. ' + (t.note + ' ' if t.note else '') + 'Ditulis oleh: ' + penulis)}")
+    catatan = f"{t.label}. " + (f"{t.note} " if t.note else "") + f"Ditulis oleh: {penulis}"
+    lines.append(f"  Note: {_q(catatan)}")
     lines.append("}")
     return "\n".join(lines)
 
 
-def _refs() -> List[str]:
+def _refs() -> list[str]:
     out = []
     for t in ALL_TABLES:
         for c in t.columns:
@@ -96,26 +95,33 @@ def _refs() -> List[str]:
             # UNIQUE pada kolom FK berarti 1:1 (mis. bast.document_id); selain itu banyak-ke-satu.
             arrow = "-" if c.unique else ">"
             ref_table, ref_col = c.fk.split(".")
-            out.append(f"Ref: {t.name}.{c.name} {arrow} {ref_table}.{ref_col} "
-                       f"[delete: {c.fk_on_delete.lower()}]")
+            out.append(
+                f"Ref: {t.name}.{c.name} {arrow} {ref_table}.{ref_col} "
+                f"[delete: {c.fk_on_delete.lower()}]"
+            )
     return out
 
 
-def _enums() -> List[str]:
+def _enums() -> list[str]:
     out = []
     for t in ALL_TABLES:
         for c in t.columns:
             if c.enum:
-                out.append(f"Enum {_enum_name(t, c)} {{\n"
-                           + "\n".join(f"  {v}" for v in c.enum) + "\n}")
+                out.append(
+                    f"Enum {_enum_name(t, c)} {{\n" + "\n".join(f"  {v}" for v in c.enum) + "\n}"
+                )
     return out
 
 
-def _groups() -> List[str]:
-    groups: Dict[str, List[str]] = {d: [t.name for t in ALL_TABLES if t.domain == d]
-                                    for d in DOMAINS}
-    return [f"TableGroup {g} {{\n" + "\n".join(f"  {n}" for n in members) + "\n}"
-            for g, members in groups.items() if members]
+def _groups() -> list[str]:
+    groups: dict[str, list[str]] = {
+        d: [t.name for t in ALL_TABLES if t.domain == d] for d in DOMAINS
+    }
+    return [
+        f"TableGroup {g} {{\n" + "\n".join(f"  {n}" for n in members) + "\n}"
+        for g, members in groups.items()
+        if members
+    ]
 
 
 _PROJECT_NOTE = (
@@ -143,7 +149,10 @@ def to_dbml() -> str:
     parts += [_table_block(t) + "\n" for t in ALL_TABLES]
     parts += ["// ---------------------------------------------------------------- relasi"]
     parts += _refs()
-    parts += ["", "// ---------------------------------------------------------------- pilihan nilai"]
+    parts += [
+        "",
+        "// ---------------------------------------------------------------- pilihan nilai",
+    ]
     parts += [e + "\n" for e in _enums()]
     parts += ["// ---------------------------------------------------------------- kelompok"]
     parts += [g + "\n" for g in _groups()]

@@ -85,6 +85,7 @@ python -m dol_schema --tables    # ringkasan tabel
 python -m dol_schema --emit      # tulis ulang generated/
 python -m dol_schema --check     # gagal bila generated/ basi (dipakai di CI)
 python -m pytest tests           # invarian skema
+ruff check . && ruff format --check .   # gaya kode PEP 8
 ```
 
 Dari repo lain:

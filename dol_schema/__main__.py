@@ -1,9 +1,10 @@
 """CLI dol-schema: bangkitkan artefak dari model, atau periksa apakah artefak sudah basi.
 
-    python -m dol_schema --emit          # tulis ulang generated/
-    python -m dol_schema --check         # gagal bila generated/ tidak sesuai model
-    python -m dol_schema --tables        # ringkasan tabel
+python -m dol_schema --emit          # tulis ulang generated/
+python -m dol_schema --check         # gagal bila generated/ tidak sesuai model
+python -m dol_schema --tables        # ringkasan tabel
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,8 +16,8 @@ from dol_schema import (
     SCHEMA_VERSION,
     generate_ddl,
     generate_ddl_usulan,
-    to_json,
     to_dbml,
+    to_json,
     to_kamus,
     to_nocodb_fields,
     to_schema_dict,
@@ -47,8 +48,11 @@ def cmd_emit() -> int:
 
 
 def cmd_check() -> int:
-    basi = [p.name for p, isi in _artifacts().items()
-            if not p.exists() or p.read_text(encoding="utf-8") != isi]
+    basi = [
+        p.name
+        for p, isi in _artifacts().items()
+        if not p.exists() or p.read_text(encoding="utf-8") != isi
+    ]
     if basi:
         print("Artefak tidak sesuai model: " + ", ".join(basi))
         print("Jalankan: python -m dol_schema --emit")
@@ -63,14 +67,17 @@ def cmd_tables() -> int:
         penulis = "MANUSIA" if t.written_by == "human" else "mesin"
         fk = [c.fk.split(".")[0] for c in t.columns if c.fk]
         rujuk = f"  -> {', '.join(fk)}" if fk else ""
-        print(f"  {t.name:<21} {t.label:<20} {t.status:<8} {len(t.columns):>2} kolom   "
-              f"ditulis {penulis}{rujuk}")
+        print(
+            f"  {t.name:<21} {t.label:<20} {t.status:<8} {len(t.columns):>2} kolom   "
+            f"ditulis {penulis}{rujuk}"
+        )
     return 0
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(prog="dol_schema", description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        prog="dol_schema", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--emit", action="store_true", help="tulis ulang generated/")
     ap.add_argument("--check", action="store_true", help="periksa generated/ vs model")
     ap.add_argument("--tables", action="store_true", help="ringkasan tabel")

@@ -14,6 +14,7 @@ SDD) ada di repo sejajar `../dol-parser/docs/proyek/`.
 python -m dol_schema --emit      # bangkitkan ulang generated/ dari model.py
 python -m dol_schema --check     # gagal bila generated/ basi
 python -m pytest tests           # invarian skema
+ruff check . && ruff format --check .   # PEP 8 (batas baris 100), harus lolos sebelum commit
 python -m dol_schema --tables    # ringkasan tabel
 ```
 

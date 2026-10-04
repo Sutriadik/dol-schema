@@ -6,12 +6,23 @@ selalu ke tabel yang ada, kolom milik PM tidak bisa diisi mesin, judul NocoDB be
 Indonesia dan aman dipakai di API, tabel usulan tidak bocor ke NocoDB, dan artefak generated/
 selalu sesuai model.
 """
+
 import re
 
 from dol_schema import (
-    ALL_TABLES, SCHEMA_VERSION, from_nocodb_record, generate_ddl, generate_ddl_usulan,
-    insert_order, natural_key, table, tables_with_status, to_nocodb_fields,
-    to_nocodb_record, to_schema_dict, validate_payload,
+    ALL_TABLES,
+    SCHEMA_VERSION,
+    from_nocodb_record,
+    generate_ddl,
+    generate_ddl_usulan,
+    insert_order,
+    natural_key,
+    table,
+    tables_with_status,
+    to_nocodb_fields,
+    to_nocodb_record,
+    to_schema_dict,
+    validate_payload,
 )
 from dol_schema.__main__ import _artifacts
 from dol_schema.model import DOMAINS, OWNERS, STATUSES
@@ -29,7 +40,7 @@ def test_setiap_fk_menunjuk_tabel_dan_kolom_yang_ada():
             if c.fk:
                 parent, col = c.fk.split(".")
                 assert col == "id", f"{t.name}.{c.name} harus menunjuk id"
-                table(parent)          # KeyError bila tabel induk tidak ada
+                table(parent)  # KeyError bila tabel induk tidak ada
 
 
 def test_urutan_insert_menempatkan_induk_lebih_dulu():
@@ -127,11 +138,18 @@ def test_status_dokumen_tidak_menghitung_keputusan_basi():
 
 # --------------------------------------------------------------------- kolom milik PM
 def test_payload_mesin_tidak_boleh_mengisi_kolom_pm():
-    payload = {"evidence_photo": [{
-        "odk_instance_id": "uuid:1", "_contract_item_ref": "x", "photo_type": "item",
-        "photo_url": "http://x/1.jpg", "taken_at": "2026-01-02T10:53:00+07:00",
-        "review_status": "approved",
-    }]}
+    payload = {
+        "evidence_photo": [
+            {
+                "odk_instance_id": "uuid:1",
+                "_contract_item_ref": "x",
+                "photo_type": "item",
+                "photo_url": "http://x/1.jpg",
+                "taken_at": "2026-01-02T10:53:00+07:00",
+                "review_status": "approved",
+            }
+        ]
+    }
     masalah = validate_payload(payload)
     assert any("review_status" in m and "milik PM" in m for m in masalah)
 
@@ -149,8 +167,10 @@ def test_schema_json_memuat_kontrak_untuk_n8n():
     assert all(table(n).status == "berlaku" for n in d["insert_order"])
     kontrak = next(t for t in d["tables"] if t["name"] == "contract")
     assert kontrak["label"] == "Kontrak" and kontrak["upsert_key"] == ["document_id"]
-    assert next(c for c in kontrak["columns"] if c["name"] == "contract_number")["label"] \
+    assert (
+        next(c for c in kontrak["columns"] if c["name"] == "contract_number")["label"]
         == "Nomor Kontrak"
+    )
 
 
 def test_nocodb_fields_judul_indonesia_tanpa_tabel_audit():
@@ -164,8 +184,11 @@ def test_nocodb_fields_judul_indonesia_tanpa_tabel_audit():
 
 
 def test_artefak_generated_sesuai_model():
-    basi = [p.name for p, isi in _artifacts().items()
-            if not p.exists() or p.read_text(encoding="utf-8") != isi]
+    basi = [
+        p.name
+        for p, isi in _artifacts().items()
+        if not p.exists() or p.read_text(encoding="utf-8") != isi
+    ]
     assert basi == [], f"jalankan `python -m dol_schema --emit`: {basi}"
 
 

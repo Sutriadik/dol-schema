@@ -11,3 +11,14 @@ dependencies = []
 
 [tool.setuptools]
 packages = ["dol_schema"]
+
+[tool.ruff]
+# Sama dengan dol-parser: PEP 8, batas baris 100. `ruff check` & `ruff format --check` di CI.
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dol_schema"]

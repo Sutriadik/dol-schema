@@ -11,19 +11,23 @@ Kenapa DDL di PostgreSQL, bukan hanya membuat tabel lewat UI NocoDB: tabel yang 
 API NocoDB tidak punya UNIQUE, CHECK, foreign key, maupun view. Integritas di bawah ini hanya
 berlaku bila PostgreSQL ini yang dipakai (NocoDB sebagai tampilan di atasnya).
 """
+
 from __future__ import annotations
 
-from typing import List
-
 from dol_schema.model import (
-    ALL_TABLES, OWNERS, SCHEMA_VERSION, Table, insert_order, tables_with_status,
+    ALL_TABLES,
+    OWNERS,
+    SCHEMA_VERSION,
+    Table,
+    insert_order,
+    tables_with_status,
 )
 
 _PG_TYPE = {
     "text": "text",
     "int": "integer",
     "numeric": "numeric(18,2)",
-    "coord": "numeric(9,6)",      # GPS: 6 desimal ~ 11 cm; numeric(18,2) akan memotongnya
+    "coord": "numeric(9,6)",  # GPS: 6 desimal ~ 11 cm; numeric(18,2) akan memotongnya
     "date": "date",
     "timestamptz": "timestamptz",
     "char3": "char(3)",
@@ -60,13 +64,15 @@ def _column_sql(t: Table, c) -> str:
 
 
 def _table_sql(t: Table) -> str:
-    lines: List[str] = [f"-- {t.label}"]
+    lines: list[str] = [f"-- {t.label}"]
     if t.note:
         for ln in t.note.split(". "):
             if ln.strip():
                 lines.append(f"-- {ln.strip().rstrip('.')}.")
-    lines.append(f"-- Ditulis oleh: {'MANUSIA (PM)' if t.written_by == 'human' else 'mesin (pipeline)'}"
-                 f" · pemilik: {OWNERS[t.owner]}")
+    lines.append(
+        f"-- Ditulis oleh: {'MANUSIA (PM)' if t.written_by == 'human' else 'mesin (pipeline)'}"
+        f" · pemilik: {OWNERS[t.owner]}"
+    )
     if t.human_columns() and t.written_by != "human":
         lines.append(f"-- Kolom yang HANYA diisi PM: {', '.join(t.human_columns())}")
     lines.append(f"CREATE TABLE IF NOT EXISTS {t.name} (")
@@ -159,7 +165,7 @@ FROM field_review fr
 JOIN extracted_field ef
   ON ef.document_id = fr.document_id AND ef.field_path = fr.field_path
 WHERE fr.decision IN ('benar', 'dikoreksi')
-  AND ef.ai_value_text IS NOT DISTINCT FROM fr.reviewed_ai_value_text;"""
+  AND ef.ai_value_text IS NOT DISTINCT FROM fr.reviewed_ai_value_text;"""  # noqa: E501 (SQL apa adanya)
 
 
 _VIEWS_USULAN = """-- ---------------------------------------------------------------- penyusunan BAST (usulan)
@@ -197,10 +203,10 @@ SELECT cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref,
 FROM contract_requirement cr
 LEFT JOIN evidence_photo ep ON ep.requirement_id = cr.id
 WHERE cr.requirement_type = 'lampiran_wajib'
-GROUP BY cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref;"""
+GROUP BY cr.contract_id, cr.line_no, cr.requirement_text, cr.clause_ref;"""  # noqa: E501 (SQL apa adanya)
 
 
-def _ordered(tables: List[Table]) -> List[Table]:
+def _ordered(tables: list[Table]) -> list[Table]:
     order = insert_order()
     return sorted(tables, key=lambda t: order.index(t.name))
 

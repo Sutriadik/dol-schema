@@ -8,10 +8,11 @@ dikoreksi manusia. Di sini setiap pelanggaran disebutkan tabel, baris, kolom, da
 Tabel berstatus 'ditunda' tetap divalidasi (supaya usulan bisa diuji dengan data nyata),
 tetapi pengirim tidak boleh mengirimnya ke NocoDB.
 """
+
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 from dol_schema.model import ALL_TABLES, Column, table
 
@@ -37,9 +38,9 @@ def _type_ok(col: Column, value: Any) -> bool:
     return True
 
 
-def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
+def validate_payload(payload: dict[str, list[dict[str, Any]]]) -> list[str]:
     """Kembalikan daftar masalah. Kosong = payload siap dikirim."""
-    problems: List[str] = []
+    problems: list[str] = []
     known = {t.name for t in ALL_TABLES}
 
     for table_name, rows in payload.items():
@@ -54,11 +55,11 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
             )
         col_names = {c.name for c in t.columns}
         human_cols = set(t.human_columns()) if t.written_by != "human" else set()
-        seen_unique: Dict[tuple, set] = {}
+        seen_unique: dict[tuple, set] = {}
 
         for i, row in enumerate(rows, 1):
             for key, value in row.items():
-                if key.startswith("_"):      # referensi antar-tabel sebelum id nyata ada
+                if key.startswith("_"):  # referensi antar-tabel sebelum id nyata ada
                     continue
                 if key not in col_names:
                     problems.append(f"{table_name}[{i}].{key}: kolom tidak ada di model")
@@ -79,16 +80,15 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
                     )
                 if col.enum and value is not None and value not in col.enum:
                     problems.append(
-                        f"{table_name}[{i}].{key}: '{value}' bukan nilai sah "
-                        f"({'|'.join(col.enum)})"
+                        f"{table_name}[{i}].{key}: '{value}' bukan nilai sah ({'|'.join(col.enum)})"
                     )
             for col in t.columns:
                 if col.null or col.name in ("created_at", "updated_at") or col.name in human_cols:
                     continue
                 if col.default and col.name not in row:
-                    continue          # database mengisi nilai bawaan
+                    continue  # database mengisi nilai bawaan
                 if col.fk and f"_{col.fk.split('.')[0]}_ref" in row:
-                    continue          # FK akan diisi saat insert, rujukannya ada
+                    continue  # FK akan diisi saat insert, rujukannya ada
                 if row.get(col.name) is None:
                     problems.append(f"{table_name}[{i}].{col.name}: NOT NULL tapi kosong")
 
@@ -96,9 +96,7 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
                 key = tuple(row.get(c) for c in cols)
                 bucket = seen_unique.setdefault(cols, set())
                 if key in bucket:
-                    problems.append(
-                        f"{table_name}[{i}]: duplikat pada UNIQUE {cols} = {key}"
-                    )
+                    problems.append(f"{table_name}[{i}]: duplikat pada UNIQUE {cols} = {key}")
                 bucket.add(key)
 
     # Aturan khusus BAST yang tidak bisa dinyatakan lewat constraint satu tabel.
@@ -111,7 +109,7 @@ def validate_payload(payload: Dict[str, List[Dict[str, Any]]]) -> List[str]:
     if parties and roles != ["handover", "receiver"]:
         problems.append(f"bast_party: peran harus handover+receiver, sekarang {roles}")
 
-    for b in (payload.get("bast") or []):
+    for b in payload.get("bast") or []:
         if b.get("direction") == "customer" and b.get("mybhakti_po_ref"):
             problems.append("bast: direction=customer tidak boleh punya mybhakti_po_ref")
         if b.get("direction") == "vendor" and b.get("contract_id"):
