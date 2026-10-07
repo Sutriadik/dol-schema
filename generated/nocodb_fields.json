@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.3",
+  "schema_version": "companion-2026.10.4",
   "tables": {
     "document": {
       "title": "Dokumen",
@@ -312,6 +312,17 @@
           "uidt": "Currency"
         },
         {
+          "column_name": "charge_type",
+          "title": "Jenis Biaya",
+          "uidt": "SingleSelect",
+          "options": [
+            "otc",
+            "mrc",
+            "otc_dan_mrc"
+          ],
+          "description": "dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas"
+        },
+        {
           "column_name": "remarks",
           "title": "Keterangan",
           "uidt": "LongText"
@@ -367,6 +378,59 @@
           "title": "Kutipan Dokumen",
           "uidt": "LongText",
           "description": "kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)"
+        }
+      ]
+    },
+    "contract_payment_term": {
+      "title": "Ketentuan Pembayaran",
+      "description": "Termin dan syarat pembayaran kontrak. BAST sering per termin (WORKSHOP_SKEMA: kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati. Baris tanpa Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back).",
+      "columns": [
+        {
+          "column_name": "contract_id",
+          "title": "ID Kontrak",
+          "uidt": "Number"
+        },
+        {
+          "column_name": "line_no",
+          "title": "No Urut",
+          "uidt": "Number",
+          "description": "urutan di daftar Ketentuan Pembayaran dokumen"
+        },
+        {
+          "column_name": "term_text",
+          "title": "Isi Ketentuan",
+          "uidt": "SingleLineText",
+          "description": "kalimat apa adanya",
+          "pv": true
+        },
+        {
+          "column_name": "term_label_text",
+          "title": "Termin",
+          "uidt": "SingleLineText",
+          "description": "sebutan termin seperti tertulis ('Termin I', 'Uang Muka', 'Pelunasan'); kosong bila baris ini bukan satu termin tertentu"
+        },
+        {
+          "column_name": "amount",
+          "title": "Nilai Termin",
+          "uidt": "Decimal",
+          "description": "hanya bila baris menyebut satu termin dengan tepat satu nominal Rp. Tidak pernah dihitung dari persentase atau dibagi dari total"
+        },
+        {
+          "column_name": "percentage_text",
+          "title": "Persentase",
+          "uidt": "SingleLineText",
+          "description": "apa adanya, mis. '30%'"
+        },
+        {
+          "column_name": "evidence_page",
+          "title": "Halaman",
+          "uidt": "Number",
+          "description": "halaman tempat ketentuan ini ditemukan"
+        },
+        {
+          "column_name": "evidence_quote",
+          "title": "Kutipan Dokumen",
+          "uidt": "LongText"
         }
       ]
     },
@@ -531,6 +595,17 @@
           "column_name": "line_total",
           "title": "Jumlah Harga",
           "uidt": "Currency"
+        },
+        {
+          "column_name": "charge_type",
+          "title": "Jenis Biaya",
+          "uidt": "SingleSelect",
+          "options": [
+            "otc",
+            "mrc",
+            "otc_dan_mrc"
+          ],
+          "description": "dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas"
         },
         {
           "column_name": "remarks",

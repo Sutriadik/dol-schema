@@ -1,5 +1,5 @@
 -- Delivery Ops Layer — skema companion (tabel yang BERLAKU)
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.3).
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.4).
 -- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.
 
 -- Menjaga updated_at tetap benar tanpa bergantung pada aplikasi yang menulis.
@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS contract_item (
     period                     text,
     unit_price                 numeric(18,2),
     line_total                 numeric(18,2),
+    charge_type                text,
     remarks                    text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
@@ -169,7 +170,8 @@ CREATE TABLE IF NOT EXISTS contract_item (
     CONSTRAINT contract_item_line_no_check CHECK (line_no > 0),
     CONSTRAINT contract_item_quantity_check CHECK (quantity >= 0),
     CONSTRAINT contract_item_unit_price_check CHECK (unit_price >= 0),
-    CONSTRAINT contract_item_line_total_check CHECK (line_total >= 0)
+    CONSTRAINT contract_item_line_total_check CHECK (line_total >= 0),
+    CONSTRAINT contract_item_charge_type_valid CHECK (charge_type IN ('otc', 'mrc', 'otc_dan_mrc'))
 );
 CREATE INDEX IF NOT EXISTS idx_contract_item_contract_id ON contract_item(contract_id);
 DROP TRIGGER IF EXISTS trg_contract_item_updated_at ON contract_item;
@@ -186,6 +188,7 @@ COMMENT ON COLUMN contract_item.unit IS 'Satuan';
 COMMENT ON COLUMN contract_item.period IS 'Periode';
 COMMENT ON COLUMN contract_item.unit_price IS 'Harga Satuan -- selalu dikonfirmasi PM (hlm. 20)';
 COMMENT ON COLUMN contract_item.line_total IS 'Jumlah Harga';
+COMMENT ON COLUMN contract_item.charge_type IS 'Jenis Biaya -- dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas';
 COMMENT ON COLUMN contract_item.remarks IS 'Keterangan';
 COMMENT ON COLUMN contract_item.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN contract_item.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
@@ -224,6 +227,43 @@ COMMENT ON COLUMN contract_requirement.evidence_page IS 'Halaman -- halaman temp
 COMMENT ON COLUMN contract_requirement.evidence_quote IS 'Kutipan Dokumen -- kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11)';
 COMMENT ON COLUMN contract_requirement.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN contract_requirement.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
+
+-- Ketentuan Pembayaran
+-- Termin dan syarat pembayaran kontrak.
+-- BAST sering per termin (WORKSHOP_SKEMA: kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati.
+-- Baris tanpa Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back).
+-- Ditulis oleh: mesin (pipeline) · pemilik: AI Engineer
+CREATE TABLE IF NOT EXISTS contract_payment_term (
+    id                         bigserial PRIMARY KEY,
+    contract_id                integer NOT NULL REFERENCES contract(id) ON DELETE CASCADE,
+    line_no                    integer NOT NULL,
+    term_text                  text NOT NULL,
+    term_label_text            text,
+    amount                     numeric(18,2),
+    percentage_text            text,
+    evidence_page              integer,
+    evidence_quote             text,
+    created_at                 timestamptz NOT NULL DEFAULT now(),
+    updated_at                 timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (contract_id, line_no),
+    CONSTRAINT contract_payment_term_line_no_check CHECK (line_no > 0),
+    CONSTRAINT contract_payment_term_amount_check CHECK (amount >= 0)
+);
+CREATE INDEX IF NOT EXISTS idx_contract_payment_term_contract_id ON contract_payment_term(contract_id);
+DROP TRIGGER IF EXISTS trg_contract_payment_term_updated_at ON contract_payment_term;
+CREATE TRIGGER trg_contract_payment_term_updated_at BEFORE UPDATE ON contract_payment_term
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+COMMENT ON TABLE contract_payment_term IS 'Ketentuan Pembayaran -- Termin dan syarat pembayaran kontrak. BAST sering per termin (WORKSHOP_SKEMA: kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati. Baris tanpa Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back).';
+COMMENT ON COLUMN contract_payment_term.contract_id IS 'ID Kontrak';
+COMMENT ON COLUMN contract_payment_term.line_no IS 'No Urut -- urutan di daftar Ketentuan Pembayaran dokumen';
+COMMENT ON COLUMN contract_payment_term.term_text IS 'Isi Ketentuan -- kalimat apa adanya';
+COMMENT ON COLUMN contract_payment_term.term_label_text IS 'Termin -- sebutan termin seperti tertulis (''Termin I'', ''Uang Muka'', ''Pelunasan''); kosong bila baris ini bukan satu termin tertentu';
+COMMENT ON COLUMN contract_payment_term.amount IS 'Nilai Termin -- hanya bila baris menyebut satu termin dengan tepat satu nominal Rp. Tidak pernah dihitung dari persentase atau dibagi dari total';
+COMMENT ON COLUMN contract_payment_term.percentage_text IS 'Persentase -- apa adanya, mis. ''30%''';
+COMMENT ON COLUMN contract_payment_term.evidence_page IS 'Halaman -- halaman tempat ketentuan ini ditemukan';
+COMMENT ON COLUMN contract_payment_term.evidence_quote IS 'Kutipan Dokumen';
+COMMENT ON COLUMN contract_payment_term.created_at IS 'Dibuat -- UTC';
+COMMENT ON COLUMN contract_payment_term.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
 -- SPH Vendor
 -- Surat penawaran harga dari vendor (rantai hulu) -- lahir dari kebutuhan kontrak.
@@ -293,6 +333,7 @@ CREATE TABLE IF NOT EXISTS sph_item (
     period                     text,
     unit_price                 numeric(18,2),
     line_total                 numeric(18,2),
+    charge_type                text,
     remarks                    text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
@@ -300,7 +341,8 @@ CREATE TABLE IF NOT EXISTS sph_item (
     CONSTRAINT sph_item_line_no_check CHECK (line_no > 0),
     CONSTRAINT sph_item_quantity_check CHECK (quantity >= 0),
     CONSTRAINT sph_item_unit_price_check CHECK (unit_price >= 0),
-    CONSTRAINT sph_item_line_total_check CHECK (line_total >= 0)
+    CONSTRAINT sph_item_line_total_check CHECK (line_total >= 0),
+    CONSTRAINT sph_item_charge_type_valid CHECK (charge_type IN ('otc', 'mrc', 'otc_dan_mrc'))
 );
 CREATE INDEX IF NOT EXISTS idx_sph_item_sph_id ON sph_item(sph_id);
 DROP TRIGGER IF EXISTS trg_sph_item_updated_at ON sph_item;
@@ -319,6 +361,7 @@ COMMENT ON COLUMN sph_item.unit IS 'Satuan';
 COMMENT ON COLUMN sph_item.period IS 'Periode';
 COMMENT ON COLUMN sph_item.unit_price IS 'Harga Satuan -- selalu dikonfirmasi PM (hlm. 20)';
 COMMENT ON COLUMN sph_item.line_total IS 'Jumlah Harga';
+COMMENT ON COLUMN sph_item.charge_type IS 'Jenis Biaya -- dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas';
 COMMENT ON COLUMN sph_item.remarks IS 'Keterangan';
 COMMENT ON COLUMN sph_item.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN sph_item.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';

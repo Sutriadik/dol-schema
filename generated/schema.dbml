@@ -1,5 +1,5 @@
 // Open ADE — Delivery Ops Layer: skema companion NocoDB
-// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.3).
+// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.4).
 // JANGAN diedit tangan: ubah model.py lalu jalankan `python -m dol_schema --emit`.
 // Buka di dbdiagram.io (tempel isi berkas ini) atau ekstensi DBML di VS Code.
 
@@ -87,6 +87,7 @@ Table contract_item [headercolor: #3498DB] {
   period text [note: 'Periode']
   unit_price numeric(18,2) [note: 'Harga Satuan. selalu dikonfirmasi PM (hlm. 20); CHECK (unit_price >= 0)']
   line_total numeric(18,2) [note: 'Jumlah Harga; CHECK (line_total >= 0)']
+  charge_type contract_item_charge_type [note: 'Jenis Biaya. dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas']
   remarks text [note: 'Keterangan']
   created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
   updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
@@ -115,6 +116,26 @@ Table contract_requirement [headercolor: #3498DB] {
   }
 
   Note: 'Syarat Kontrak. Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST. Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
+}
+
+Table contract_payment_term [headercolor: #3498DB] {
+  id bigint [pk, increment]
+  contract_id integer [not null, note: 'ID Kontrak']
+  line_no integer [not null, note: 'No Urut. urutan di daftar Ketentuan Pembayaran dokumen; CHECK (line_no > 0)']
+  term_text text [not null, note: 'Isi Ketentuan. kalimat apa adanya']
+  term_label_text text [note: 'Termin. sebutan termin seperti tertulis (\'Termin I\', \'Uang Muka\', \'Pelunasan\'); kosong bila baris ini bukan satu termin tertentu']
+  amount numeric(18,2) [note: 'Nilai Termin. hanya bila baris menyebut satu termin dengan tepat satu nominal Rp. Tidak pernah dihitung dari persentase atau dibagi dari total; CHECK (amount >= 0)']
+  percentage_text text [note: 'Persentase. apa adanya, mis. \'30%\'']
+  evidence_page integer [note: 'Halaman. halaman tempat ketentuan ini ditemukan']
+  evidence_quote text [note: 'Kutipan Dokumen']
+  created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
+  updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
+
+  indexes {
+    (contract_id, line_no) [unique]
+  }
+
+  Note: 'Ketentuan Pembayaran. Termin dan syarat pembayaran kontrak. BAST sering per termin (WORKSHOP_SKEMA: kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati. Baris tanpa Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back). Ditulis oleh: mesin (pipeline). Pemilik: AI Engineer'
 }
 
 Table sph [headercolor: #3498DB] {
@@ -155,6 +176,7 @@ Table sph_item [headercolor: #3498DB] {
   period text [note: 'Periode']
   unit_price numeric(18,2) [note: 'Harga Satuan. selalu dikonfirmasi PM (hlm. 20); CHECK (unit_price >= 0)']
   line_total numeric(18,2) [note: 'Jumlah Harga; CHECK (line_total >= 0)']
+  charge_type sph_item_charge_type [note: 'Jenis Biaya. dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas']
   remarks text [note: 'Keterangan']
   created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
   updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
@@ -357,6 +379,7 @@ Ref: contract.document_id - document.id [delete: cascade]
 Ref: contract_party.contract_id > contract.id [delete: cascade]
 Ref: contract_item.contract_id > contract.id [delete: cascade]
 Ref: contract_requirement.contract_id > contract.id [delete: cascade]
+Ref: contract_payment_term.contract_id > contract.id [delete: cascade]
 Ref: sph.document_id - document.id [delete: cascade]
 Ref: sph_item.sph_id > sph.id [delete: cascade]
 Ref: bast.document_id - document.id [delete: cascade]
@@ -394,10 +417,22 @@ Enum contract_party_role {
   pelaksana
 }
 
+Enum contract_item_charge_type {
+  otc
+  mrc
+  otc_dan_mrc
+}
+
 Enum contract_requirement_requirement_type {
   lampiran_wajib
   syarat_serah_terima
   boleh_parsial
+}
+
+Enum sph_item_charge_type {
+  otc
+  mrc
+  otc_dan_mrc
 }
 
 Enum bast_direction {
@@ -481,6 +516,7 @@ TableGroup kontrak {
   contract_party
   contract_item
   contract_requirement
+  contract_payment_term
 }
 
 TableGroup sph {

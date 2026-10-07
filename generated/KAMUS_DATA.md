@@ -1,6 +1,6 @@
 # Kamus Data — Delivery Ops Layer
 
-Versi skema **companion-2026.10.3**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
+Versi skema **companion-2026.10.4**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
 
 Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan
 **nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,
@@ -18,6 +18,7 @@ Data master klien, vendor, proyek, dan PO **tidak** ada di sini — sumbernya My
 | **Pihak Kontrak** | `contract_party` | berlaku | AI Engineer | sistem | ya |
 | **Rincian Kontrak** | `contract_item` | berlaku | AI Engineer | sistem | ya |
 | **Syarat Kontrak** | `contract_requirement` | berlaku | AI Engineer | sistem | ya |
+| **Ketentuan Pembayaran** | `contract_payment_term` | berlaku | AI Engineer | sistem | ya |
 | **SPH Vendor** | `sph` | berlaku | AI Engineer | sistem | ya |
 | **Rincian SPH** | `sph_item` | berlaku | AI Engineer | sistem | ya |
 | **BAST** | `bast` | ditunda | AI Engineer | sistem | tidak |
@@ -30,7 +31,7 @@ Data master klien, vendor, proyek, dan PO **tidak** ada di sini — sumbernya My
 | **Keputusan PM** | `field_review` | berlaku | PM | PM | ya |
 | **Riwayat Pemrosesan** | `extraction_run` | berlaku | AI Engineer | sistem | tidak |
 
-Urutan pengisian tabel yang berlaku (induk dulu): Dokumen → Kontrak → Pihak Kontrak → Rincian Kontrak → Syarat Kontrak → SPH Vendor → Rincian SPH → Hasil Ekstraksi → Keputusan PM → Riwayat Pemrosesan
+Urutan pengisian tabel yang berlaku (induk dulu): Dokumen → Kontrak → Pihak Kontrak → Rincian Kontrak → Syarat Kontrak → Ketentuan Pembayaran → SPH Vendor → Rincian SPH → Hasil Ekstraksi → Keputusan PM → Riwayat Pemrosesan
 
 ## Cara PM memakai tabel ini di NocoDB
 
@@ -163,6 +164,7 @@ BoQ kontrak = kewajiban ke pelanggan (hlm. 7). Sumber tunggal rincian pekerjaan 
 | **Periode** | `period` | teks |  | sistem |  |
 | **Harga Satuan** | `unit_price` | angka |  | sistem | selalu dikonfirmasi PM (hlm. 20) |
 | **Jumlah Harga** | `line_total` | angka |  | sistem |  |
+| **Jenis Biaya** | `charge_type` | teks |  | sistem | dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas Pilihan: `otc`, `mrc`, `otc_dan_mrc`. |
 | **Keterangan** | `remarks` | teks |  | sistem |  |
 
 ### Syarat Kontrak (`contract_requirement`)
@@ -185,6 +187,28 @@ Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh par
 | **Pasal Rujukan** | `clause_ref` | teks |  | sistem | mis. 'Pasal 9 ayat 2' |
 | **Halaman** | `evidence_page` | angka bulat |  | sistem | halaman tempat syarat ini ditemukan |
 | **Kutipan Dokumen** | `evidence_quote` | teks |  | sistem | kutipan pendek agar PM tidak perlu membaca ulang kontrak (hlm. 11) |
+
+### Ketentuan Pembayaran (`contract_payment_term`)
+
+Termin dan syarat pembayaran kontrak. BAST sering per termin (WORKSHOP_SKEMA: kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati. Baris tanpa Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back).
+
+- **Status:** berlaku
+- **Pemilik:** AI Engineer
+- **Diisi oleh:** sistem
+- **Tampil di NocoDB:** ya, judul baris = **Isi Ketentuan**
+- **Kunci anti-dobel:** ID Kontrak + No Urut
+- **Induk:** Kontrak
+
+| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
+|---|---|---|---|---|---|
+| **ID Kontrak** | `contract_id` | angka bulat | ya | sistem | → Kontrak. |
+| **No Urut** | `line_no` | angka bulat | ya | sistem | urutan di daftar Ketentuan Pembayaran dokumen |
+| **Isi Ketentuan** | `term_text` | teks | ya | sistem | kalimat apa adanya |
+| **Termin** | `term_label_text` | teks |  | sistem | sebutan termin seperti tertulis ('Termin I', 'Uang Muka', 'Pelunasan'); kosong bila baris ini bukan satu termin tertentu |
+| **Nilai Termin** | `amount` | angka |  | sistem | hanya bila baris menyebut satu termin dengan tepat satu nominal Rp. Tidak pernah dihitung dari persentase atau dibagi dari total |
+| **Persentase** | `percentage_text` | teks |  | sistem | apa adanya, mis. '30%' |
+| **Halaman** | `evidence_page` | angka bulat |  | sistem | halaman tempat ketentuan ini ditemukan |
+| **Kutipan Dokumen** | `evidence_quote` | teks |  | sistem |  |
 
 ### Kelompok: sph
 
@@ -245,6 +269,7 @@ Baris penawaran vendor. Relasi ke barang yang dibeli (procurement item) untuk ta
 | **Periode** | `period` | teks |  | sistem |  |
 | **Harga Satuan** | `unit_price` | angka |  | sistem | selalu dikonfirmasi PM (hlm. 20) |
 | **Jumlah Harga** | `line_total` | angka |  | sistem |  |
+| **Jenis Biaya** | `charge_type` | teks |  | sistem | dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas Pilihan: `otc`, `mrc`, `otc_dan_mrc`. |
 | **Keterangan** | `remarks` | teks |  | sistem |  |
 
 ### Kelompok: verifikasi

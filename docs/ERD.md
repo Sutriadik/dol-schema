@@ -1,5 +1,5 @@
 > **Status 2026-10-02 — sebagian tidak berlaku.** Acuan skema yang berlaku adalah
-> [`generated/KAMUS_DATA.md`](../generated/KAMUS_DATA.md) (versi `companion-2026.10.3`).
+> [`generated/KAMUS_DATA.md`](../generated/KAMUS_DATA.md) (versi `companion-2026.10.4`).
 > Dokumen ini ditulis untuk 2026.10.1. Bagian BAST & evidence kini berstatus **usulan
 > (ditunda)**, dan "generator" yang dijelaskan di sini (menyalin BoQ dari JSON mentah, mengisi
 > nilai bawaan) sudah diganti penyusun yang hanya membaca nilai terverifikasi PM. Dipakai

@@ -1,5 +1,5 @@
 -- Delivery Ops Layer — tabel USULAN (status: ditunda)
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.3).
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.4).
 -- Untuk dibahas bersama RPA & Network Engineer. Jalankan SETELAH schema.sql.
 -- Tabel: bast, bast_party, bast_item, bast_condition, bast_draft, evidence_photo
 
