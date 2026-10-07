@@ -11,12 +11,12 @@
 
 ## Yang sudah berlaku (tidak perlu diputuskan ulang)
 
-Versi `companion-2026.10.3`. Rinciannya di [`generated/KAMUS_DATA.md`](../generated/KAMUS_DATA.md).
+Versi `companion-2026.10.4`. Rinciannya di [`generated/KAMUS_DATA.md`](../generated/KAMUS_DATA.md).
 
 | Tabel (judul NocoDB) | Isi | Penulis |
 |---|---|---|
 | Dokumen | setiap PDF yang masuk | sistem |
-| Kontrak, Pihak Kontrak, Rincian Kontrak, Syarat Kontrak | kontrak/SPK pelanggan, BoQ, lampiran wajib | sistem |
+| Kontrak, Pihak Kontrak, Rincian Kontrak, Syarat Kontrak, Ketentuan Pembayaran | kontrak/SPK pelanggan, BoQ (dengan jenis biaya OTC/MRC), lampiran wajib, termin | sistem |
 | SPH Vendor, Rincian SPH | penawaran vendor per baris | sistem |
 | Hasil Ekstraksi | nilai terbaca + bukti, antrean PM | sistem |
 | Keputusan PM | konfirmasi per field | **PM saja** |
@@ -39,7 +39,7 @@ Keputusan yang sudah diambil:
 
 | # | Pertanyaan | Kenapa penting |
 |---|---|---|
-| 1a | Kunci anti-dobel **Draf BAST**: per kontrak + nomor termin? | Tanpa kunci, pengiriman ulang menghapus persetujuan PM (terbukti di versi lama). |
+| 1a | Kunci anti-dobel **Draf BAST**: per kontrak + nomor termin? | Tanpa kunci, pengiriman ulang menghapus persetujuan PM (terbukti di versi lama). Sejak 2026.10.4 termin tersimpan di *Ketentuan Pembayaran* (`contract_payment_term.line_no`), calon rujukan kunci ini. |
 | 1b | Nomor BAST dari numbering service: kapan dipesan — saat draf dibuat atau saat disetujui? | Nomor duplikat tidak bisa diperbaiki setelah terkirim (hlm. 20). |
 | 1c | Satu kontrak bisa punya beberapa BAST (termin/parsial)? | Menentukan relasi kontrak → BAST (1:1 atau 1:banyak). |
 | 1d | Serah terima sering berupa paket berita acara (BAUT, BARD, BAPB) — satu tabel atau `doc_type` tambahan? | Dari 20 proyek nyata, BAUT pernah 55 halaman. |

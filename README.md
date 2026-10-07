@@ -46,7 +46,7 @@ menerjemahkan dengan `to_nocodb_record()` (Python) atau `columns[].label` di `sc
 
 | Status | Arti | Tabel |
 |---|---|---|
-| **berlaku** | disepakati, dibuat di NocoDB | Dokumen, Kontrak, Pihak Kontrak, Rincian Kontrak, Syarat Kontrak, SPH Vendor, Rincian SPH, Hasil Ekstraksi, Keputusan PM (+ Riwayat Pemrosesan, hanya PostgreSQL) |
+| **berlaku** | disepakati, dibuat di NocoDB | Dokumen, Kontrak, Pihak Kontrak, Rincian Kontrak, Syarat Kontrak, Ketentuan Pembayaran, SPH Vendor, Rincian SPH, Hasil Ekstraksi, Keputusan PM (+ Riwayat Pemrosesan, hanya PostgreSQL) |
 | **ditunda** | usulan, menunggu kesepakatan tim | BAST, Pihak BAST, Rincian BAST, Kondisi BAST, Draf BAST (bersama RPA); Foto Evidence (bersama Network Engineer) |
 
 BAST pelanggan bersumber dari kontrak (briefing hlm. 10). Selama tabel kontrak lengkap dan

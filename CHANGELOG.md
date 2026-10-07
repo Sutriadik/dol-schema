@@ -38,6 +38,21 @@ Langkah setiap perubahan skema:
 
 Belum ada perubahan.
 
+## [companion-2026.10.4] — 2026-10-07
+
+### Ditambah — dampak: **aman** untuk n8n, tetapi **wajib base NocoDB baru**
+- `contract_item.charge_type` dan `sph_item.charge_type` (*Jenis Biaya*): `otc`, `mrc`,
+  atau `otc_dan_mrc`. Kontrak layanan Telkom menulis harga di kolom OTC/MRC; tanpa kolom
+  ini, Harga Satuan bulanan (MRC) tidak bisa dibedakan dari harga sekali bayar, dan
+  volume x harga satuan tidak sama dengan Jumlah Harga (yang = harga x volume x periode).
+  Diisi dol-parser dari judul kolom tabel, bukan tebakan LLM; kosong bila tidak jelas.
+- Tabel `contract_payment_term` (*Ketentuan Pembayaran*): semua baris ketentuan
+  pembayaran kontrak, dengan sebutan termin dan nominal hanya bila tertulis eksplisit.
+  Dibutuhkan sebelum skema BAST disepakati (WORKSHOP_SKEMA 1a & 1c: BAST per termin).
+
+Base NocoDB 2026.10.3 tidak punya kolom/tabel ini; payload 2026.10.4 akan ditolak di sana.
+Buat base baru: `scripts/nocodb_setup.py --create-base` di dol-parser.
+
 ## [companion-2026.10.3] — 2026-10-04
 
 ### Dihapus — dampak: **perlu penyesuaian**

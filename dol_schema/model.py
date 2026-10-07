@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-SCHEMA_VERSION = "companion-2026.10.3"
+SCHEMA_VERSION = "companion-2026.10.4"
 
 # Pemilik tabel menurut briefing hlm. 12-15. Yang merancang & memelihara isi tabelnya.
 OWNERS = {
@@ -105,6 +105,14 @@ DOC_TYPES = ("kontrak", "sph", "bast")
 CONTRACT_TYPES = ("nota_pesanan", "surat_pesanan", "spk", "kontrak_kerja_sama", "pks", "lainnya")
 CONTRACT_PARTY_ROLES = ("pemberi_kerja", "pelaksana")
 REQUIREMENT_TYPES = ("lampiran_wajib", "syarat_serah_terima", "boleh_parsial")
+# Istilah kontrak layanan Telkom, dipakai apa adanya karena itu yang dikenal PM.
+# otc = One Time Charge (sekali bayar), mrc = Monthly Recurring Charge (per bulan).
+CHARGE_TYPES = ("otc", "mrc", "otc_dan_mrc")
+_CHARGE_TYPE_NOTE = (
+    "dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan "
+    "adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong "
+    "bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas"
+)
 # Status bukti dari sistem. Sengaja TIDAK memakai kata "terverifikasi": yang diperiksa sistem
 # hanya apakah nilainya ada di dokumen, bukan apakah nilainya benar (briefing hlm. 20).
 SYSTEM_STATUSES = (
@@ -318,6 +326,7 @@ CONTRACT_ITEM = Table(
             note="selalu dikonfirmasi PM (hlm. 20)",
         ),
         Column("line_total", "numeric", "Jumlah Harga", check="line_total >= 0"),
+        Column("charge_type", "text", "Jenis Biaya", enum=CHARGE_TYPES, note=_CHARGE_TYPE_NOTE),
         Column("remarks", "text", "Keterangan"),
         *_AUDIT,
     ],
@@ -367,6 +376,49 @@ CONTRACT_REQUIREMENT = Table(
     unique_together=(("contract_id", "line_no"),),
     note="Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial "
     "(hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST.",
+)
+
+CONTRACT_PAYMENT_TERM = Table(
+    "contract_payment_term",
+    [
+        Column("contract_id", "int", "ID Kontrak", null=False, fk="contract.id"),
+        Column(
+            "line_no",
+            "int",
+            "No Urut",
+            null=False,
+            check="line_no > 0",
+            note="urutan di daftar Ketentuan Pembayaran dokumen",
+        ),
+        Column("term_text", "text", "Isi Ketentuan", null=False, note="kalimat apa adanya"),
+        Column(
+            "term_label_text",
+            "text",
+            "Termin",
+            note="sebutan termin seperti tertulis ('Termin I', 'Uang Muka', 'Pelunasan'); "
+            "kosong bila baris ini bukan satu termin tertentu",
+        ),
+        Column(
+            "amount",
+            "numeric",
+            "Nilai Termin",
+            check="amount >= 0",
+            note="hanya bila baris menyebut satu termin dengan tepat satu nominal Rp. Tidak "
+            "pernah dihitung dari persentase atau dibagi dari total",
+        ),
+        Column("percentage_text", "text", "Persentase", note="apa adanya, mis. '30%'"),
+        Column("evidence_page", "int", "Halaman", note="halaman tempat ketentuan ini ditemukan"),
+        Column("evidence_quote", "text", "Kutipan Dokumen"),
+        *_AUDIT,
+    ],
+    domain="kontrak",
+    owner="ai",
+    label="Ketentuan Pembayaran",
+    display="term_text",
+    unique_together=(("contract_id", "line_no"),),
+    note="Termin dan syarat pembayaran kontrak. BAST sering per termin (WORKSHOP_SKEMA: "
+    "kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati. Baris tanpa "
+    "Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back).",
 )
 
 # =========================================================================== 3. SPH VENDOR
@@ -432,6 +484,7 @@ SPH_ITEM = Table(
             note="selalu dikonfirmasi PM (hlm. 20)",
         ),
         Column("line_total", "numeric", "Jumlah Harga", check="line_total >= 0"),
+        Column("charge_type", "text", "Jenis Biaya", enum=CHARGE_TYPES, note=_CHARGE_TYPE_NOTE),
         Column("remarks", "text", "Keterangan"),
         *_AUDIT,
     ],
@@ -790,6 +843,7 @@ ALL_TABLES: list[Table] = [
     CONTRACT_PARTY,
     CONTRACT_ITEM,
     CONTRACT_REQUIREMENT,
+    CONTRACT_PAYMENT_TERM,
     SPH,
     SPH_ITEM,
     BAST,

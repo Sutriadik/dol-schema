@@ -9,5 +9,5 @@
   `docs/WORKSHOP_SKEMA.md`, jangan langsung mengubah status.
 - Setelah `--emit`, uji DDL di PostgreSQL bila tersedia (`psql -f generated/schema.sql` pada
   cluster sementara), bukan hanya tes string.
-- Repo ini belum punya remote. Commit & tag boleh bila diminta; push menunggu repo GitHub-nya
-  dibuat pengguna.
+- Remote `origin` = `github.com/Sutriadik/dol-schema`. Commit, tag, dan push hanya bila
+  diminta pengguna.

@@ -1,11 +1,12 @@
 {
-  "schema_version": "companion-2026.10.3",
+  "schema_version": "companion-2026.10.4",
   "insert_order": [
     "document",
     "contract",
     "contract_party",
     "contract_item",
     "contract_requirement",
+    "contract_payment_term",
     "sph",
     "sph_item",
     "extracted_field",
@@ -574,6 +575,19 @@
           "check": "line_total >= 0"
         },
         {
+          "name": "charge_type",
+          "label": "Jenis Biaya",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": false,
+          "enum": [
+            "otc",
+            "mrc",
+            "otc_dan_mrc"
+          ],
+          "note": "dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas"
+        },
+        {
           "name": "remarks",
           "label": "Keterangan",
           "type": "text",
@@ -715,6 +729,121 @@
         ]
       ],
       "note": "Aturan dari kontrak, bukan angka: lampiran wajib, syarat serah terima, boleh parsial (hlm. 11). Baris lampiran wajib adalah separuh checklist gabungan BAST."
+    },
+    {
+      "name": "contract_payment_term",
+      "label": "Ketentuan Pembayaran",
+      "status": "berlaku",
+      "domain": "kontrak",
+      "owner": "AI Engineer",
+      "written_by": "machine",
+      "in_nocodb": true,
+      "display_column": "term_text",
+      "upsert_key": [
+        "contract_id",
+        "line_no"
+      ],
+      "parent_refs": [
+        {
+          "column": "contract_id",
+          "references": "contract.id",
+          "placeholder": "_contract_ref",
+          "required": true,
+          "on_delete": "CASCADE"
+        }
+      ],
+      "human_columns": [],
+      "columns": [
+        {
+          "name": "contract_id",
+          "label": "ID Kontrak",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "fk": "contract.id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "name": "line_no",
+          "label": "No Urut",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": true,
+          "check": "line_no > 0",
+          "note": "urutan di daftar Ketentuan Pembayaran dokumen"
+        },
+        {
+          "name": "term_text",
+          "label": "Isi Ketentuan",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": true,
+          "note": "kalimat apa adanya"
+        },
+        {
+          "name": "term_label_text",
+          "label": "Termin",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "sebutan termin seperti tertulis ('Termin I', 'Uang Muka', 'Pelunasan'); kosong bila baris ini bukan satu termin tertentu"
+        },
+        {
+          "name": "amount",
+          "label": "Nilai Termin",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false,
+          "check": "amount >= 0",
+          "note": "hanya bila baris menyebut satu termin dengan tepat satu nominal Rp. Tidak pernah dihitung dari persentase atau dibagi dari total"
+        },
+        {
+          "name": "percentage_text",
+          "label": "Persentase",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "apa adanya, mis. '30%'"
+        },
+        {
+          "name": "evidence_page",
+          "label": "Halaman",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "note": "halaman tempat ketentuan ini ditemukan"
+        },
+        {
+          "name": "evidence_quote",
+          "label": "Kutipan Dokumen",
+          "type": "text",
+          "nocodb_type": "LongText",
+          "required": false
+        },
+        {
+          "name": "created_at",
+          "label": "Dibuat",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC"
+        },
+        {
+          "name": "updated_at",
+          "label": "Diperbarui",
+          "type": "timestamptz",
+          "nocodb_type": "DateTime",
+          "required": true,
+          "note": "UTC, diperbarui trigger"
+        }
+      ],
+      "unique_together": [
+        [
+          "contract_id",
+          "line_no"
+        ]
+      ],
+      "note": "Termin dan syarat pembayaran kontrak. BAST sering per termin (WORKSHOP_SKEMA: kontrak -> BAST 1:N), jadi termin perlu ada sebelum skema BAST disepakati. Baris tanpa Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back)."
     },
     {
       "name": "sph",
@@ -1000,6 +1129,19 @@
           "nocodb_type": "Currency",
           "required": false,
           "check": "line_total >= 0"
+        },
+        {
+          "name": "charge_type",
+          "label": "Jenis Biaya",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": false,
+          "enum": [
+            "otc",
+            "mrc",
+            "otc_dan_mrc"
+          ],
+          "note": "dari judul kolom tabel tempat harganya tertulis, bukan tebakan. mrc = Harga Satuan adalah harga PER BULAN, jadi Jumlah Harga biasanya harga x volume x periode. Kosong bila tabel tidak menyebut OTC/MRC atau judulnya tidak jelas"
         },
         {
           "name": "remarks",
