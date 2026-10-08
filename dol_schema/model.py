@@ -99,7 +99,7 @@ _AUDIT = [
     Column("updated_at", "timestamptz", "Diperbarui", null=False, note="UTC, diperbarui trigger"),
 ]
 
-# --------------------------------------------------------------------------- pilihan nilai
+# pilihan nilai
 # Yang tampil di NocoDB: bahasa Indonesia, huruf kecil, garis bawah sebagai spasi.
 DOC_TYPES = ("kontrak", "sph", "bast")
 CONTRACT_TYPES = ("nota_pesanan", "surat_pesanan", "spk", "kontrak_kerja_sama", "pks", "lainnya")
@@ -143,7 +143,7 @@ PHOTO_TYPES = ("item", "serial_label", "installation", "screenshot")
 EVIDENCE_REVIEW_STATUSES = ("pending", "approved", "rejected")
 
 
-# =========================================================================== 1. DOKUMEN
+# 1. DOKUMEN
 DOCUMENT = Table(
     "document",
     [
@@ -182,7 +182,7 @@ DOCUMENT = Table(
     note="Setiap berkas yang masuk, apa pun jenisnya.",
 )
 
-# =========================================================================== 2. KONTRAK
+# 2. KONTRAK
 CONTRACT = Table(
     "contract",
     [
@@ -421,7 +421,7 @@ CONTRACT_PAYMENT_TERM = Table(
     "Termin adalah syarat pembayaran umum (lampiran tagihan, rekening, back to back).",
 )
 
-# =========================================================================== 3. SPH VENDOR
+# 3. SPH VENDOR
 SPH = Table(
     "sph",
     [
@@ -497,7 +497,7 @@ SPH_ITEM = Table(
     "banding harga dirancang di Bulan 5 -- belum ada di sini.",
 )
 
-# =========================================================================== 4. BAST (DITUNDA)
+# 4. BAST (DITUNDA)
 _DITUNDA_BAST = (
     "DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer "
     "(lampiran) di workshop skema. "
@@ -671,7 +671,7 @@ BAST_DRAFT = Table(
     "karena tanpa kunci, pengiriman ulang menghapus persetujuan PM.",
 )
 
-# =========================================================================== 5. EVIDENCE (DITUNDA)
+# 5. EVIDENCE (DITUNDA)
 EVIDENCE_PHOTO = Table(
     "evidence_photo",
     [
@@ -730,7 +730,7 @@ EVIDENCE_PHOTO = Table(
     "terima, surat jalan), bukan foto -- bentuk tabel bukti perlu dibahas bersama.",
 )
 
-# =========================================================================== 6. VERIFIKASI
+# 6. VERIFIKASI
 EXTRACTED_FIELD = Table(
     "extracted_field",
     [
@@ -813,7 +813,7 @@ FIELD_REVIEW = Table(
     "Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini.",
 )
 
-# =========================================================================== 7. AUDIT
+# 7. AUDIT
 EXTRACTION_RUN = Table(
     "extraction_run",
     [
