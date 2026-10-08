@@ -33,7 +33,7 @@ _JUDUL_AMAN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ]*$")
 _JUDUL_SISTEM_NOCODB = {"Id", "CreatedAt", "UpdatedAt", "nc_order"}
 
 
-# --------------------------------------------------------------------- struktur
+# struktur
 def test_setiap_fk_menunjuk_tabel_dan_kolom_yang_ada():
     for t in ALL_TABLES:
         for c in t.columns:
@@ -83,7 +83,7 @@ def test_tabel_yang_disinkron_ulang_punya_kunci_anti_dobel():
             assert natural_key(t), t.name
 
 
-# --------------------------------------------------------------------- bahasa Indonesia
+# bahasa Indonesia
 def test_setiap_tabel_dan_kolom_punya_label_indonesia():
     for t in ALL_TABLES:
         assert t.label, t.name
@@ -116,7 +116,7 @@ def test_terjemahan_judul_bolak_balik():
     assert from_nocodb_record("contract", dict(rekaman, CreatedAt="x")) == baris
 
 
-# --------------------------------------------------------------------- tabel usulan
+# tabel usulan
 def test_tabel_usulan_tidak_dibuat_di_nocodb_maupun_schema_sql():
     usulan = {t.name for t in tables_with_status("ditunda")}
     assert {"bast", "bast_draft", "evidence_photo"} <= usulan
@@ -136,7 +136,7 @@ def test_status_dokumen_tidak_menghitung_keputusan_basi():
     assert "stale_count" in sql and "CREATE OR REPLACE VIEW nilai_terverifikasi" in sql
 
 
-# --------------------------------------------------------------------- kolom milik PM
+# kolom milik PM
 def test_payload_mesin_tidak_boleh_mengisi_kolom_pm():
     payload = {
         "evidence_photo": [
@@ -159,7 +159,7 @@ def test_pipeline_tidak_boleh_menulis_keputusan_pm():
     assert any("milik manusia" in m for m in masalah)
 
 
-# --------------------------------------------------------------------- artefak untuk tim lain
+# artefak untuk tim lain
 def test_schema_json_memuat_kontrak_untuk_n8n():
     d = to_schema_dict()
     assert d["schema_version"] == SCHEMA_VERSION and d["conventions"]

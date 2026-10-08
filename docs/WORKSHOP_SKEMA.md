@@ -1,4 +1,4 @@
-# Workshop Skema Companion — bahan untuk bertiga
+# Workshop Skema Companion: bahan untuk bertiga
 
 **Untuk:** RPA Engineer, Network Engineer, AI Engineer, + mentor
 **Durasi:** 90 menit
@@ -35,21 +35,21 @@ Keputusan yang sudah diambil:
 
 ## Yang harus diputuskan bersama
 
-### 1. BAST (bersama RPA Engineer) — tabel usulan di `generated/schema_usulan.sql`
+### 1. BAST (bersama RPA Engineer): tabel usulan di `generated/schema_usulan.sql`
 
 | # | Pertanyaan | Kenapa penting |
 |---|---|---|
 | 1a | Kunci anti-dobel **Draf BAST**: per kontrak + nomor termin? | Tanpa kunci, pengiriman ulang menghapus persetujuan PM (terbukti di versi lama). Sejak 2026.10.4 termin tersimpan di *Ketentuan Pembayaran* (`contract_payment_term.line_no`), calon rujukan kunci ini. |
-| 1b | Nomor BAST dari numbering service: kapan dipesan — saat draf dibuat atau saat disetujui? | Nomor duplikat tidak bisa diperbaiki setelah terkirim (hlm. 20). |
+| 1b | Nomor BAST dari numbering service: kapan dipesan: saat draf dibuat atau saat disetujui? | Nomor duplikat tidak bisa diperbaiki setelah terkirim (hlm. 20). |
 | 1c | Satu kontrak bisa punya beberapa BAST (termin/parsial)? | Menentukan relasi kontrak → BAST (1:1 atau 1:banyak). |
-| 1d | Serah terima sering berupa paket berita acara (BAUT, BARD, BAPB) — satu tabel atau `doc_type` tambahan? | Dari 20 proyek nyata, BAUT pernah 55 halaman. |
+| 1d | Serah terima sering berupa paket berita acara (BAUT, BARD, BAPB): satu tabel atau `doc_type` tambahan? | Dari 20 proyek nyata, BAUT pernah 55 halaman. |
 | 1e | Siapa yang merender BAST (dol-render) dan dari data apa? | Penyusun data draf sudah ada di dol-parser (`app/companion/generator.py`) dan hanya membaca nilai terverifikasi. |
 
-Bahan: [`docs/usulan-alur-bast/TEMUAN_14_BAST.md`](usulan-alur-bast/TEMUAN_14_BAST.md) —
+Bahan: [`docs/usulan-alur-bast/TEMUAN_14_BAST.md`](usulan-alur-bast/TEMUAN_14_BAST.md):
 temuan dari 14 BAST asli (label "Pihak Pertama/Kedua" terbalik antar-format, arah BAST bisa
 diturunkan dari peran BUT).
 
-### 2. Evidence (bersama Network Engineer) — tabel usulan `evidence_photo`
+### 2. Evidence (bersama Network Engineer): tabel usulan `evidence_photo`
 
 | # | Pertanyaan | Kenapa penting |
 |---|---|---|
@@ -57,19 +57,19 @@ diturunkan dari peran BUT).
 | 2b | Bagaimana teknisi di ODK memilih baris BoQ yang dibuktikan, padahal ODK tidak tahu Id baris NocoDB? | Kolom `contract_item_id` wajib di usulan sekarang. |
 | 2c | Pemeriksaan otomatis (GPS, radius lokasi, masa kontrak) di n8n atau di ODK? | Menentukan isi `auto_check_notes`. |
 
-### 3. Pengadaan (bersama RPA Engineer) — belum ada di skema
+### 3. Pengadaan (bersama RPA Engineer): belum ada di skema
 
 | # | Pertanyaan | Kenapa penting |
 |---|---|---|
 | 3a | Tabel **procurement item** (barang yang dibeli) terpisah dari Rincian Kontrak (barang yang dijual)? | Briefing hlm. 7 memisahkan keduanya; satu baris kontrak bisa butuh beberapa barang beli. Tabel banding harga (Bulan 5) bergantung pada ini. |
-| 3b | Tabel **SPPH** (permintaan ke vendor) dan pelacakan balasan (threadId Gmail) — milik siapa? | Diagnosis no. 2 "balasan vendor tak terlacak" (hlm. 5). |
+| 3b | Tabel **SPPH** (permintaan ke vendor) dan pelacakan balasan (threadId Gmail): milik siapa? | Diagnosis no. 2 "balasan vendor tak terlacak" (hlm. 5). |
 
 ### 4. Infrastruktur (bersama + mentor)
 
 | # | Pertanyaan | Kenapa penting |
 |---|---|---|
 | 4a | PostgreSQL + NocoDB sebagai sumber eksternal, atau NocoDB murni? | Tabel yang dibuat lewat API NocoDB **tidak punya** UNIQUE, CHECK, FK, maupun view. Integritas hanya dijaga pengirim. |
-| 4b | Export skema NocoDB ke Git tiap minggu (hlm. 20) — siapa, bagaimana? | `scripts/nocodb_setup.py --compare-schema` di dol-parser bisa jadi pemeriksanya. |
+| 4b | Export skema NocoDB ke Git tiap minggu (hlm. 20): siapa, bagaimana? | `scripts/nocodb_setup.py --compare-schema` di dol-parser bisa jadi pemeriksanya. |
 
 ---
 

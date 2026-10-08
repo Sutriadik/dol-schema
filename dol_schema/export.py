@@ -106,7 +106,7 @@ def nocodb_type(col: Column) -> str:
     raise ValueError(f"Tipe tak dikenal '{col.type}' pada kolom {col.name}")
 
 
-# --------------------------------------------------------------------------- judul NocoDB
+# judul NocoDB
 def nocodb_title(table_name: str, column_name: str) -> str:
     """Nama teknis kolom -> judul kolom di NocoDB. 'Id' (kolom bawaan NocoDB) tetap 'Id'."""
     if column_name == "Id":
@@ -134,7 +134,7 @@ def from_nocodb_record(table_name: str, record: dict[str, Any]) -> dict[str, Any
     return out
 
 
-# --------------------------------------------------------------------------- schema.json
+# schema.json
 def _column_dict(col: Column) -> dict[str, Any]:
     out: dict[str, Any] = {
         "name": col.name,
@@ -195,7 +195,7 @@ def to_schema_dict() -> dict[str, Any]:
     }
 
 
-# --------------------------------------------------------------------------- nocodb_fields.json
+# nocodb_fields.json
 def _nocodb_field(t: Table, c: Column) -> dict[str, Any]:
     out: dict[str, Any] = {"column_name": c.name, "title": c.label, "uidt": nocodb_type(c)}
     if c.enum:
