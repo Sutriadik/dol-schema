@@ -1,6 +1,6 @@
 # Kamus Data — Delivery Ops Layer
 
-Versi skema **companion-2026.10.4**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
+Versi skema **companion-2026.10.5**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
 
 Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan
 **nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,
@@ -75,6 +75,7 @@ Setiap berkas yang masuk, apa pun jenisnya.
 | **Jumlah Halaman** | `page_count` | angka bulat |  | sistem |  |
 | **Isi Dokumen** | `markdown` | teks |  | sistem | teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan |
 | **Catatan Validasi** | `validation_notes` | teks |  | sistem | peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total |
+| **Mutu Pembacaan** | `parse_quality` | teks |  | sistem | nilai mutu rata-rata dari mesin pembaca atas layout, OCR, dan teks. Ikut menilai layout: PDF digital yang teksnya utuh pun bisa bernilai cukup, jadi ini petunjuk, bukan ukuran salah baca. Kosong bila mesin tidak melaporkannya Pilihan: `buruk`, `cukup`, `baik`, `sangat_baik`. |
 
 ### Kelompok: kontrak
 
@@ -295,6 +296,7 @@ Satu baris per field: nilai terbaca + bukti. Antrean kerja PM. Ditulis mesin saj
 | **Halaman Bukti** | `evidence_page` | angka bulat |  | sistem | dihitung sistem, bukan ditulis LLM |
 | **Kutipan Bukti** | `evidence_quote` | teks |  | sistem | potongan teks dokumen tempat nilai ditemukan |
 | **Skor Bukti** | `evidence_score` | angka |  | sistem | 0-1: seberapa persis nilai ditemukan di teks dokumen |
+| **Skor Keyakinan** | `confidence` | angka |  | sistem | 0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan |
 | **Status Bukti** | `system_status` | teks | ya | sistem | saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar Pilihan: `bukti_kuat`, `bukti_cukup`, `perlu_dicek`, `tidak_ada_di_dokumen`, `bertentangan`, `kosong`. |
 
 ### Keputusan PM (`field_review`)

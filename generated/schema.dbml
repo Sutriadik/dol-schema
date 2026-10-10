@@ -1,5 +1,5 @@
 // Open ADE — Delivery Ops Layer: skema companion NocoDB
-// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.4).
+// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.5).
 // JANGAN diedit tangan: ubah model.py lalu jalankan `python -m dol_schema --emit`.
 // Buka di dbdiagram.io (tempel isi berkas ini) atau ekstensi DBML di VS Code.
 
@@ -16,6 +16,7 @@ Table document [headercolor: #3498DB] {
   page_count integer [note: 'Jumlah Halaman; CHECK (page_count > 0)']
   markdown text [note: 'Isi Dokumen. teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan']
   validation_notes text [note: 'Catatan Validasi. peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total']
+  parse_quality document_parse_quality [note: 'Mutu Pembacaan. nilai mutu rata-rata dari mesin pembaca atas layout, OCR, dan teks. Ikut menilai layout: PDF digital yang teksnya utuh pun bisa bernilai cukup, jadi ini petunjuk, bukan ukuran salah baca. Kosong bila mesin tidak melaporkannya']
   created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
   updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
 
@@ -325,6 +326,7 @@ Table extracted_field [headercolor: #3498DB] {
   evidence_page integer [note: 'Halaman Bukti. dihitung sistem, bukan ditulis LLM']
   evidence_quote text [note: 'Kutipan Bukti. potongan teks dokumen tempat nilai ditemukan']
   evidence_score numeric(18,2) [note: 'Skor Bukti. 0-1: seberapa persis nilai ditemukan di teks dokumen']
+  confidence numeric(18,2) [note: 'Skor Keyakinan. 0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan']
   system_status extracted_field_system_status [not null, note: 'Status Bukti. saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar']
   created_at timestamptz [not null, default: `now()`, note: 'Dibuat. UTC']
   updated_at timestamptz [not null, default: `now()`, note: 'Diperbarui. UTC, diperbarui trigger']
@@ -401,6 +403,13 @@ Enum document_doc_type {
   kontrak
   sph
   bast
+}
+
+Enum document_parse_quality {
+  buruk
+  cukup
+  baik
+  sangat_baik
 }
 
 Enum contract_contract_type {

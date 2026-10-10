@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.4",
+  "schema_version": "companion-2026.10.5",
   "insert_order": [
     "document",
     "contract",
@@ -92,6 +92,20 @@
           "nocodb_type": "LongText",
           "required": false,
           "note": "peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total"
+        },
+        {
+          "name": "parse_quality",
+          "label": "Mutu Pembacaan",
+          "type": "text",
+          "nocodb_type": "SingleSelect",
+          "required": false,
+          "enum": [
+            "buruk",
+            "cukup",
+            "baik",
+            "sangat_baik"
+          ],
+          "note": "nilai mutu rata-rata dari mesin pembaca atas layout, OCR, dan teks. Ikut menilai layout: PDF digital yang teksnya utuh pun bisa bernilai cukup, jadi ini petunjuk, bukan ukuran salah baca. Kosong bila mesin tidak melaporkannya"
         },
         {
           "name": "created_at",
@@ -2149,6 +2163,14 @@
           "nocodb_type": "Decimal",
           "required": false,
           "note": "0-1: seberapa persis nilai ditemukan di teks dokumen"
+        },
+        {
+          "name": "confidence",
+          "label": "Skor Keyakinan",
+          "type": "numeric",
+          "nocodb_type": "Decimal",
+          "required": false,
+          "note": "0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan"
         },
         {
           "name": "system_status",
