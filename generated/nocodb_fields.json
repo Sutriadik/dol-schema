@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.4",
+  "schema_version": "companion-2026.10.5",
   "tables": {
     "document": {
       "title": "Dokumen",
@@ -43,6 +43,18 @@
           "title": "Catatan Validasi",
           "uidt": "LongText",
           "description": "peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total"
+        },
+        {
+          "column_name": "parse_quality",
+          "title": "Mutu Pembacaan",
+          "uidt": "SingleSelect",
+          "options": [
+            "buruk",
+            "cukup",
+            "baik",
+            "sangat_baik"
+          ],
+          "description": "nilai mutu rata-rata dari mesin pembaca atas layout, OCR, dan teks. Ikut menilai layout: PDF digital yang teksnya utuh pun bisa bernilai cukup, jadi ini petunjuk, bukan ukuran salah baca. Kosong bila mesin tidak melaporkannya"
         }
       ]
     },
@@ -652,6 +664,12 @@
           "title": "Skor Bukti",
           "uidt": "Decimal",
           "description": "0-1: seberapa persis nilai ditemukan di teks dokumen"
+        },
+        {
+          "column_name": "confidence",
+          "title": "Skor Keyakinan",
+          "uidt": "Decimal",
+          "description": "0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan"
         },
         {
           "column_name": "system_status",

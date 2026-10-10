@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-SCHEMA_VERSION = "companion-2026.10.4"
+SCHEMA_VERSION = "companion-2026.10.5"
 
 # Pemilik tabel menurut briefing hlm. 12-15. Yang merancang & memelihara isi tabelnya.
 OWNERS = {
@@ -124,6 +124,10 @@ SYSTEM_STATUSES = (
     "kosong",
 )
 REVIEW_DECISIONS = ("benar", "dikoreksi", "ditolak")
+# Nilai mutu konversi dari mesin pembaca (Docling: poor/fair/good/excellent). Yang disimpan
+# nilai hurufnya, bukan angkanya: Docling menyatakan angka skornya hanya informatif dan cara
+# hitungnya bisa berubah antar-versi.
+PARSE_QUALITIES = ("buruk", "cukup", "baik", "sangat_baik")
 
 # Pilihan nilai tabel yang DITUNDA belum diterjemahkan: diputuskan bersama saat disepakati.
 BAST_DIRECTIONS = ("customer", "vendor", "unknown")
@@ -172,6 +176,15 @@ DOCUMENT = Table(
             "Catatan Validasi",
             note="peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak "
             "sama dengan total",
+        ),
+        Column(
+            "parse_quality",
+            "text",
+            "Mutu Pembacaan",
+            enum=PARSE_QUALITIES,
+            note="nilai mutu rata-rata dari mesin pembaca atas layout, OCR, dan teks. Ikut "
+            "menilai layout: PDF digital yang teksnya utuh pun bisa bernilai cukup, jadi ini "
+            "petunjuk, bukan ukuran salah baca. Kosong bila mesin tidak melaporkannya",
         ),
         *_AUDIT,
     ],
@@ -755,6 +768,13 @@ EXTRACTED_FIELD = Table(
             "numeric",
             "Skor Bukti",
             note="0-1: seberapa persis nilai ditemukan di teks dokumen",
+        ),
+        Column(
+            "confidence",
+            "numeric",
+            "Skor Keyakinan",
+            note="0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. "
+            "Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan",
         ),
         Column(
             "system_status",

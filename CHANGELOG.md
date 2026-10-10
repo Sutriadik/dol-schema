@@ -38,6 +38,30 @@ Langkah setiap perubahan skema:
 
 Belum ada perubahan.
 
+## [companion-2026.10.5] — 2026-10-10
+
+### Ditambah — dampak: **aman** untuk n8n, tetapi **wajib base NocoDB baru**
+- `extracted_field.confidence` (*Skor Keyakinan*): skor gabungan 0–1 yang sudah dihitung
+  dol-parser (Skor Bukti + mutu teks sumber + hasil aturan validasi) kini tersimpan. Ini
+  menutup butir "Diketahui, belum diperbaiki" di 2026.10.1. Arahan mentor: yang masuk
+  NocoDB adalah nilai hasil ekstraksi dan skor keyakinannya. Gunanya mengurutkan antrean PM
+  dari yang paling berisiko; **bukan** persetujuan, dan tidak mengubah *Status Bukti*.
+- `document.parse_quality` (*Mutu Pembacaan*): `buruk`, `cukup`, `baik`, `sangat_baik`.
+  Nilai mutu rata-rata dari mesin pembaca (laporan *confidence* Docling). Yang disimpan
+  nilai hurufnya, bukan angkanya: Docling menyatakan angka skornya hanya informatif dan
+  cara hitungnya bisa berubah. Kosong bila mesin pembaca tidak melaporkannya.
+  Nilai ini ikut menilai layout, jadi **petunjuk, bukan ukuran salah baca**: pada 4 dokumen
+  nyata, tiga hasil pindai bernilai `baik`/`sangat_baik`, sedangkan satu PDF digital yang
+  teksnya terbaca utuh bernilai `cukup`. Karena itu dol-parser tidak membuat peringatan
+  otomatis dari nilai ini.
+
+Base NocoDB 2026.10.4 tidak punya kedua kolom ini; payload 2026.10.5 akan ditolak di sana.
+Buat base baru: `scripts/nocodb_setup.py --create-base` di dol-parser.
+
+Catatan: di PostgreSQL kolom skor bertipe `numeric(18,2)`, jadi 0,876 tersimpan 0,88. Sama
+dengan `evidence_score` sejak awal; cukup untuk mengurutkan, bukan untuk membandingkan
+selisih kecil.
+
 ## [companion-2026.10.4] — 2026-10-07
 
 ### Ditambah — dampak: **aman** untuk n8n, tetapi **wajib base NocoDB baru**

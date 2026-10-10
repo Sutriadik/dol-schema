@@ -1,5 +1,5 @@
 -- Delivery Ops Layer — skema companion (tabel yang BERLAKU)
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.4).
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.5).
 -- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.
 
 -- Menjaga updated_at tetap benar tanpa bergantung pada aplikasi yang menulis.
@@ -21,10 +21,12 @@ CREATE TABLE IF NOT EXISTS document (
     page_count                 integer,
     markdown                   text,
     validation_notes           text,
+    parse_quality              text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT document_doc_type_valid CHECK (doc_type IN ('kontrak', 'sph', 'bast')),
-    CONSTRAINT document_page_count_check CHECK (page_count > 0)
+    CONSTRAINT document_page_count_check CHECK (page_count > 0),
+    CONSTRAINT document_parse_quality_valid CHECK (parse_quality IN ('buruk', 'cukup', 'baik', 'sangat_baik'))
 );
 DROP TRIGGER IF EXISTS trg_document_updated_at ON document;
 CREATE TRIGGER trg_document_updated_at BEFORE UPDATE ON document
@@ -36,6 +38,7 @@ COMMENT ON COLUMN document.source_filename IS 'Nama Berkas';
 COMMENT ON COLUMN document.page_count IS 'Jumlah Halaman';
 COMMENT ON COLUMN document.markdown IS 'Isi Dokumen -- teks hasil pembacaan sistem, agar PM bisa membaca tanpa membuka PDF. Bagian yang rusak OCR bisa sudah dipoles mesin: PDF asli tetap acuan';
 COMMENT ON COLUMN document.validation_notes IS 'Catatan Validasi -- peringatan tingkat dokumen, mis. salinan ganda atau jumlah item tidak sama dengan total';
+COMMENT ON COLUMN document.parse_quality IS 'Mutu Pembacaan -- nilai mutu rata-rata dari mesin pembaca atas layout, OCR, dan teks. Ikut menilai layout: PDF digital yang teksnya utuh pun bisa bernilai cukup, jadi ini petunjuk, bukan ukuran salah baca. Kosong bila mesin tidak melaporkannya';
 COMMENT ON COLUMN document.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN document.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 
@@ -379,6 +382,7 @@ CREATE TABLE IF NOT EXISTS extracted_field (
     evidence_page              integer,
     evidence_quote             text,
     evidence_score             numeric(18,2),
+    confidence                 numeric(18,2),
     system_status              text NOT NULL,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
@@ -396,6 +400,7 @@ COMMENT ON COLUMN extracted_field.ai_value_text IS 'Nilai Terbaca Sistem';
 COMMENT ON COLUMN extracted_field.evidence_page IS 'Halaman Bukti -- dihitung sistem, bukan ditulis LLM';
 COMMENT ON COLUMN extracted_field.evidence_quote IS 'Kutipan Bukti -- potongan teks dokumen tempat nilai ditemukan';
 COMMENT ON COLUMN extracted_field.evidence_score IS 'Skor Bukti -- 0-1: seberapa persis nilai ditemukan di teks dokumen';
+COMMENT ON COLUMN extracted_field.confidence IS 'Skor Keyakinan -- 0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan';
 COMMENT ON COLUMN extracted_field.system_status IS 'Status Bukti -- saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar';
 COMMENT ON COLUMN extracted_field.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN extracted_field.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
