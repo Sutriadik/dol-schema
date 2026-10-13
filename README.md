@@ -2,9 +2,7 @@
 
 Definisi skema data **Delivery Ops Layer (DOL)** PT Bhakti Unggul Teknovasi.
 
-Repo ini menjawab satu pertanyaan saja: **bentuk datanya seperti apa.** Cara mengisinya
-bukan urusan repo ini; itu milik `dol-parser` (ekstraksi AI), `dol-n8n` (orkestrasi), dan
-`dol-bast-compiler` (lampiran BAST).
+Repo ini menjawab satu pertanyaan saja, **bentuk, tipe dan struktur datanya seperti apa.**.
 
 ## Kenapa dipisah dari dol-parser
 
