@@ -135,7 +135,7 @@ _PROJECT_NOTE = (
 
 def to_dbml() -> str:
     parts = [
-        "// Open ADE — Delivery Ops Layer: skema companion NocoDB",
+        "// Open ADE: Delivery Ops Layer, skema companion NocoDB",
         f"// Dibangkitkan dari dol_schema/model.py (versi {SCHEMA_VERSION}).",
         "// JANGAN diedit tangan: ubah model.py lalu jalankan `python -m dol_schema --emit`.",
         "// Buka di dbdiagram.io (tempel isi berkas ini) atau ekstensi DBML di VS Code.",

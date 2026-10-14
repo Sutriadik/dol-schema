@@ -4,7 +4,7 @@ kolom <-> judul NocoDB.
 
 Kenapa ada: n8n (RPA Engineer) dan compiler lampiran BAST (Network Engineer) tidak bisa
 meng-import `model.py`. Mereka membaca `generated/schema.json`. Tanpa ini, nama kolom akan
-ditulis ulang di tiap repo — persis penyakit yang membuat exporter lama tidak terawat.
+ditulis ulang di tiap repo, persis penyakit yang membuat exporter lama tidak terawat.
 
 Judul NocoDB = label bahasa Indonesia. API rekaman NocoDB v2 memakai JUDUL kolom sebagai
 kunci JSON dan di klausa `where`, jadi setiap pengirim wajib menerjemahkan nama teknis ke

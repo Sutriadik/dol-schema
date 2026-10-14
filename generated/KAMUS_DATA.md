@@ -1,12 +1,12 @@
-# Kamus Data — Delivery Ops Layer
+# Kamus Data Delivery Ops Layer
 
-Versi skema **companion-2026.10.5**. Dibangkitkan dari `dol_schema/model.py` — jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
+Versi skema **companion-2026.10.6**. Dibangkitkan dari `dol_schema/model.py`, jadi jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
 
 Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan
 **nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,
 `created_at`, `updated_at` yang diisi otomatis.
 
-Data master klien, vendor, proyek, dan PO **tidak** ada di sini — sumbernya MyBhakti
+Data master klien, vendor, proyek, dan PO **tidak** ada di sini. Sumbernya MyBhakti
 (briefing hlm. 7); yang disimpan hanya kolom rujukan `mybhakti_*_ref`.
 
 ## Daftar tabel
@@ -36,8 +36,9 @@ Urutan pengisian tabel yang berlaku (induk dulu): Dokumen → Kontrak → Pihak 
 ## Cara PM memakai tabel ini di NocoDB
 
 1. Buka **Hasil Ekstraksi**, saring per dokumen. Urutkan **Status Bukti**: kerjakan
-   `bertentangan`, `tidak_ada_di_dokumen`, dan `perlu_dicek` lebih dulu.
-2. `bukti_kuat` artinya nilai itu **ditemukan** di dokumen — bukan berarti benar. Nomor
+   `bertentangan`, `tidak_ada_di_dokumen`, dan `perlu_dicek` lebih dulu. Kolom
+   **Alasan Status** menyebut kenapa baris itu ditandai.
+2. `bukti_kuat` artinya nilai itu **ditemukan** di dokumen, bukan berarti benar. Nomor
    kontrak yang salah bisa tetap `bukti_kuat` bila nomor lain di dokumen kebetulan sama.
    Harga dan klausul tetap wajib diperiksa (briefing hlm. 20).
 3. Catat setiap keputusan di **Keputusan PM**: `benar`, `dikoreksi` (isi **Nilai Final**),
@@ -65,7 +66,7 @@ Setiap berkas yang masuk, apa pun jenisnya.
 - **Diisi oleh:** sistem
 - **Tampil di NocoDB:** ya, judul baris = **Nama Berkas**
 - **Kunci anti-dobel:** Sidik Berkas
-- **Induk:** —
+- **Induk:** -
 
 | Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
 |---|---|---|---|---|---|
@@ -79,7 +80,7 @@ Setiap berkas yang masuk, apa pun jenisnya.
 
 ### Kelompok: kontrak
 
-Kontrak/SPK pelanggan — sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11).
+Kontrak/SPK pelanggan, sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11).
 
 ### Kontrak (`contract`)
 
@@ -298,6 +299,7 @@ Satu baris per field: nilai terbaca + bukti. Antrean kerja PM. Ditulis mesin saj
 | **Skor Bukti** | `evidence_score` | angka |  | sistem | 0-1: seberapa persis nilai ditemukan di teks dokumen |
 | **Skor Keyakinan** | `confidence` | angka |  | sistem | 0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan |
 | **Status Bukti** | `system_status` | teks | ya | sistem | saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar Pilihan: `bukti_kuat`, `bukti_cukup`, `perlu_dicek`, `tidak_ada_di_dokumen`, `bertentangan`, `kosong`. |
+| **Alasan Status** | `status_reason` | teks |  | sistem | kenapa sistem memberi Status Bukti ini, mis. aturan validasi yang dilanggar atau bacaan OCR kedua yang berbeda. Kosong bila tidak ada catatan |
 
 ### Keputusan PM (`field_review`)
 
@@ -323,7 +325,7 @@ Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Ni
 
 ### Kelompok: audit
 
-Jejak teknis pemrosesan — hanya di PostgreSQL, tidak tampil di NocoDB.
+Jejak teknis pemrosesan. Hanya ada di PostgreSQL, tidak tampil di NocoDB.
 
 ### Riwayat Pemrosesan (`extraction_run`)
 
@@ -333,7 +335,7 @@ Jejak tiap pemrosesan -- dasar bukti 'Terukur' (hlm. 21). Hanya di PostgreSQL.
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
 - **Tampil di NocoDB:** tidak (hanya PostgreSQL)
-- **Kunci anti-dobel:** — (belum ada)
+- **Kunci anti-dobel:** belum ada
 - **Induk:** Dokumen
 
 | Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
@@ -367,7 +369,7 @@ DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) 
 - **Status:** ditunda
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** belum — tabel usulan
+- **Tampil di NocoDB:** belum (tabel usulan)
 - **Kunci anti-dobel:** ID Dokumen
 - **Induk:** Kontrak, Dokumen
 
@@ -399,7 +401,7 @@ DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) 
 - **Status:** ditunda
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** belum — tabel usulan
+- **Tampil di NocoDB:** belum (tabel usulan)
 - **Kunci anti-dobel:** ID BAST + Peran
 - **Induk:** BAST
 
@@ -420,7 +422,7 @@ DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) 
 - **Status:** ditunda
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** belum — tabel usulan
+- **Tampil di NocoDB:** belum (tabel usulan)
 - **Kunci anti-dobel:** ID BAST + No Urut
 - **Induk:** BAST, Rincian Kontrak
 
@@ -449,8 +451,8 @@ DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) 
 - **Status:** ditunda
 - **Pemilik:** AI Engineer
 - **Diisi oleh:** sistem
-- **Tampil di NocoDB:** belum — tabel usulan
-- **Kunci anti-dobel:** — (belum ada)
+- **Tampil di NocoDB:** belum (tabel usulan)
+- **Kunci anti-dobel:** belum ada
 - **Induk:** BAST
 
 | Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
@@ -468,8 +470,8 @@ DITUNDA: dirancang bersama RPA (nomor & render) dan Network Engineer (lampiran) 
 - **Status:** ditunda
 - **Pemilik:** RPA Engineer
 - **Diisi oleh:** sistem; kolom milik PM: Disetujui Oleh, Waktu Disetujui
-- **Tampil di NocoDB:** belum — tabel usulan
-- **Kunci anti-dobel:** — (belum ada)
+- **Tampil di NocoDB:** belum (tabel usulan)
+- **Kunci anti-dobel:** belum ada
 - **Induk:** BAST, Kontrak
 
 | Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
@@ -499,7 +501,7 @@ DITUNDA: usulan untuk disepakati dengan Network Engineer (dol-odk & dol-bast-com
 - **Status:** ditunda
 - **Pemilik:** Network Engineer
 - **Diisi oleh:** sistem; kolom milik PM: Status Review, Diperiksa Oleh, Waktu Diperiksa, Catatan Review
-- **Tampil di NocoDB:** belum — tabel usulan
+- **Tampil di NocoDB:** belum (tabel usulan)
 - **Kunci anti-dobel:** ID Kiriman ODK
 - **Induk:** Rincian Kontrak, Syarat Kontrak
 

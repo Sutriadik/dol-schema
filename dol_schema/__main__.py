@@ -43,7 +43,7 @@ def cmd_emit() -> int:
     for path, content in _artifacts().items():
         path.write_text(content, encoding="utf-8")
         print(f"  ditulis  {path.relative_to(ROOT)}  ({len(content):,} byte)")
-    print(f"\nSkema {SCHEMA_VERSION} — {len(ALL_TABLES)} tabel.")
+    print(f"\nSkema {SCHEMA_VERSION}: {len(ALL_TABLES)} tabel.")
     return 0
 
 
@@ -62,7 +62,7 @@ def cmd_check() -> int:
 
 
 def cmd_tables() -> int:
-    print(f"Skema {SCHEMA_VERSION} — {len(ALL_TABLES)} tabel\n")
+    print(f"Skema {SCHEMA_VERSION}: {len(ALL_TABLES)} tabel\n")
     for t in ALL_TABLES:
         penulis = "MANUSIA" if t.written_by == "human" else "mesin"
         fk = [c.fk.split(".")[0] for c in t.columns if c.fk]

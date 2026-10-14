@@ -1,5 +1,5 @@
 """
-dol-schema — definisi model data companion Delivery Ops Layer (SATU sumber kebenaran).
+dol-schema: definisi model data companion Delivery Ops Layer (SATU sumber kebenaran).
 
 Semua yang lain dibangkitkan dari file ini: DDL PostgreSQL, schema.json untuk n8n & compiler
 BAST, spesifikasi kolom NocoDB, diagram DBML, dan kamus data. Nama kolom hanya ditulis di sini.
@@ -14,8 +14,8 @@ Dua lapis nama, sengaja dipisah:
 
 Status tabel:
 
-- **berlaku**  — disepakati & dipakai sekarang; dibuat di NocoDB.
-- **ditunda**  — usulan yang menunggu kesepakatan tim (BAST bersama RPA, evidence bersama
+- **berlaku**: disepakati & dipakai sekarang; dibuat di NocoDB.
+- **ditunda**: usulan yang menunggu kesepakatan tim (BAST bersama RPA, evidence bersama
   Network Engineer). Tetap didefinisikan di sini supaya bisa dibahas, tapi TIDAK dibuat di
   NocoDB dan DDL-nya terpisah (`generated/schema_usulan.sql`).
 
@@ -27,14 +27,14 @@ Prinsip yang ditegakkan struktur, bukan kedisiplinan:
   tanpa akhiran dan boleh NULL. Kolom yang bisa tidak terbaca dari dokumen boleh NULL, supaya
   pengirim tidak terdorong mengarang nilai pengisi.
 - **Batas kepemilikan data (hlm. 7).** Klien, vendor, proyek, PO milik MyBhakti: di sini hanya
-  kolom rujukan `mybhakti_*_ref` yang diisi n8n — sengaja BUKAN foreign key.
+  kolom rujukan `mybhakti_*_ref` yang diisi n8n, dan sengaja BUKAN foreign key.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-SCHEMA_VERSION = "companion-2026.10.5"
+SCHEMA_VERSION = "companion-2026.10.6"
 
 # Pemilik tabel menurut briefing hlm. 12-15. Yang merancang & memelihara isi tabelnya.
 OWNERS = {
@@ -784,6 +784,13 @@ EXTRACTED_FIELD = Table(
             enum=SYSTEM_STATUSES,
             note="saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai "
             "ada di dokumen, bukan apakah perannya benar",
+        ),
+        Column(
+            "status_reason",
+            "text",
+            "Alasan Status",
+            note="kenapa sistem memberi Status Bukti ini, mis. aturan validasi yang dilanggar "
+            "atau bacaan OCR kedua yang berbeda. Kosong bila tidak ada catatan",
         ),
         *_AUDIT,
     ],

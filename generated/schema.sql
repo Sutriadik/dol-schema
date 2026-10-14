@@ -1,5 +1,5 @@
--- Delivery Ops Layer — skema companion (tabel yang BERLAKU)
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.5).
+-- Delivery Ops Layer: skema companion (tabel yang BERLAKU)
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.6).
 -- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.
 
 -- Menjaga updated_at tetap benar tanpa bergantung pada aplikasi yang menulis.
@@ -384,6 +384,7 @@ CREATE TABLE IF NOT EXISTS extracted_field (
     evidence_score             numeric(18,2),
     confidence                 numeric(18,2),
     system_status              text NOT NULL,
+    status_reason              text,
     created_at                 timestamptz NOT NULL DEFAULT now(),
     updated_at                 timestamptz NOT NULL DEFAULT now(),
     UNIQUE (document_id, field_path),
@@ -402,6 +403,7 @@ COMMENT ON COLUMN extracted_field.evidence_quote IS 'Kutipan Bukti -- potongan t
 COMMENT ON COLUMN extracted_field.evidence_score IS 'Skor Bukti -- 0-1: seberapa persis nilai ditemukan di teks dokumen';
 COMMENT ON COLUMN extracted_field.confidence IS 'Skor Keyakinan -- 0-1: gabungan Skor Bukti, mutu teks sumber, dan hasil aturan validasi. Untuk mengurutkan antrean PM dari yang paling berisiko; BUKAN persetujuan';
 COMMENT ON COLUMN extracted_field.system_status IS 'Status Bukti -- saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar';
+COMMENT ON COLUMN extracted_field.status_reason IS 'Alasan Status -- kenapa sistem memberi Status Bukti ini, mis. aturan validasi yang dilanggar atau bacaan OCR kedua yang berbeda. Kosong bila tidak ada catatan';
 COMMENT ON COLUMN extracted_field.created_at IS 'Dibuat -- UTC';
 COMMENT ON COLUMN extracted_field.updated_at IS 'Diperbarui -- UTC, diperbarui trigger';
 

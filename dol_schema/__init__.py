@@ -1,4 +1,4 @@
-"""dol-schema — definisi skema data Delivery Ops Layer (PT BUT).
+"""dol-schema: definisi skema data Delivery Ops Layer (PT BUT).
 
 Satu sumber kebenaran untuk bentuk data yang dipakai bersama tiga repo:
 dol-parser (AI), dol-n8n (RPA), dol-bast-compiler (Network).

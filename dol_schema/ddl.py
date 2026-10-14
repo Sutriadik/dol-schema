@@ -213,7 +213,7 @@ def _ordered(tables: list[Table]) -> list[Table]:
 
 def generate_ddl() -> str:
     out = [
-        "-- Delivery Ops Layer — skema companion (tabel yang BERLAKU)",
+        "-- Delivery Ops Layer: skema companion (tabel yang BERLAKU)",
         f"-- Dibangkitkan dari dol_schema/model.py (versi {SCHEMA_VERSION}).",
         "-- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.",
         "",
@@ -230,7 +230,7 @@ def generate_ddl() -> str:
 def generate_ddl_usulan() -> str:
     usulan = tables_with_status("ditunda")
     out = [
-        "-- Delivery Ops Layer — tabel USULAN (status: ditunda)",
+        "-- Delivery Ops Layer: tabel USULAN (status: ditunda)",
         f"-- Dibangkitkan dari dol_schema/model.py (versi {SCHEMA_VERSION}).",
         "-- Untuk dibahas bersama RPA & Network Engineer. Jalankan SETELAH schema.sql.",
         f"-- Tabel: {', '.join(t.name for t in _ordered(usulan))}",

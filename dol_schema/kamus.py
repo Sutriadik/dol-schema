@@ -33,20 +33,21 @@ _TYPE_LABEL = {
 _DOMAIN_INTRO = {
     "dokumen": "Setiap berkas PDF yang masuk.",
     "kontrak": (
-        "Kontrak/SPK pelanggan — sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11)."
+        "Kontrak/SPK pelanggan, sumber semua BoQ dan aturan serah terima (briefing hlm. 3 & 11)."
     ),
     "sph": "Penawaran vendor yang lahir dari kebutuhan kontrak (rantai hulu).",
     "bast": "Serah terima. BAST pelanggan dibaca dari kontrak; nomor & render oleh RPA.",
     "evidence": "Foto bukti lapangan dari ODK Central (wilayah Network Engineer).",
     "verifikasi": "Nilai yang dibaca sistem beserta buktinya, dan keputusan PM per field.",
-    "audit": "Jejak teknis pemrosesan — hanya di PostgreSQL, tidak tampil di NocoDB.",
+    "audit": "Jejak teknis pemrosesan. Hanya ada di PostgreSQL, tidak tampil di NocoDB.",
 }
 _ALUR_PM = """\
 ## Cara PM memakai tabel ini di NocoDB
 
 1. Buka **Hasil Ekstraksi**, saring per dokumen. Urutkan **Status Bukti**: kerjakan
-   `bertentangan`, `tidak_ada_di_dokumen`, dan `perlu_dicek` lebih dulu.
-2. `bukti_kuat` artinya nilai itu **ditemukan** di dokumen — bukan berarti benar. Nomor
+   `bertentangan`, `tidak_ada_di_dokumen`, dan `perlu_dicek` lebih dulu. Kolom
+   **Alasan Status** menyebut kenapa baris itu ditandai.
+2. `bukti_kuat` artinya nilai itu **ditemukan** di dokumen, bukan berarti benar. Nomor
    kontrak yang salah bisa tetap `bukti_kuat` bila nomor lain di dokumen kebetulan sama.
    Harga dan klausul tetap wajib diperiksa (briefing hlm. 20).
 3. Catat setiap keputusan di **Keputusan PM**: `benar`, `dikoreksi` (isi **Nilai Final**),
@@ -87,7 +88,7 @@ def _table_section(t: Table) -> list[str]:
     if t.in_nocodb:
         di_nocodb = "ya" + (f", judul baris = **{t.column(t.display).label}**" if t.display else "")
     elif t.status == "ditunda":
-        di_nocodb = "belum — tabel usulan"
+        di_nocodb = "belum (tabel usulan)"
     else:
         di_nocodb = "tidak (hanya PostgreSQL)"
     lines = [
@@ -105,8 +106,8 @@ def _table_section(t: Table) -> list[str]:
         ),
         f"- **Tampil di NocoDB:** {di_nocodb}",
         "- **Kunci anti-dobel:** "
-        + (" + ".join(t.column(k).label for k in key) if key else "— (belum ada)"),
-        f"- **Induk:** {', '.join(label_induk) if label_induk else '—'}",
+        + (" + ".join(t.column(k).label for k in key) if key else "belum ada"),
+        f"- **Induk:** {', '.join(label_induk) if label_induk else '-'}",
         "",
         "| Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |",
         "|---|---|---|---|---|---|",
@@ -131,16 +132,16 @@ def to_kamus() -> str:
     berlaku = tables_with_status("berlaku")
     ditunda = tables_with_status("ditunda")
     out = [
-        "# Kamus Data — Delivery Ops Layer",
+        "# Kamus Data Delivery Ops Layer",
         "",
-        f"Versi skema **{SCHEMA_VERSION}**. Dibangkitkan dari `dol_schema/model.py` — "
-        "jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.",
+        f"Versi skema **{SCHEMA_VERSION}**. Dibangkitkan dari `dol_schema/model.py`, "
+        "jadi jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.",
         "",
         "Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan",
         "**nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,",
         "`created_at`, `updated_at` yang diisi otomatis.",
         "",
-        "Data master klien, vendor, proyek, dan PO **tidak** ada di sini — sumbernya MyBhakti",
+        "Data master klien, vendor, proyek, dan PO **tidak** ada di sini. Sumbernya MyBhakti",
         "(briefing hlm. 7); yang disimpan hanya kolom rujukan `mybhakti_*_ref`.",
         "",
         "## Daftar tabel",

@@ -38,6 +38,22 @@ Langkah setiap perubahan skema:
 
 Belum ada perubahan.
 
+## [companion-2026.10.6] - 2026-10-15
+
+### Ditambah: dampak **aman** untuk n8n, tetapi base NocoDB perlu kolom baru
+- `extracted_field.status_reason` (*Alasan Status*): kenapa sebuah field mendapat Status
+  Bukti tertentu. dol-parser mengisinya dengan pesan aturan validasi yang menyebut field
+  itu (mis. subtotal + PPN tidak sama dengan total) dan dengan hasil bacaan OCR kedua bila
+  bacaannya berbeda. Sebelum versi ini alasan tersebut hanya muncul di Catatan Validasi
+  dokumen, jadi PM yang membuka Antrean PM melihat `perlu_dicek` tanpa tahu sebabnya.
+  Kosong bila sistem tidak punya catatan untuk field itu.
+
+Base NocoDB 2026.10.5 belum punya kolom ini, dan payload 2026.10.6 akan ditolak di sana.
+Ada dua cara: tambahkan kolom teks panjang berjudul `Alasan Status` di tabel Hasil Ekstraksi
+lewat UI NocoDB, atau buat base baru dengan `scripts/nocodb_setup.py --create-base` di
+dol-parser. Diuji: `generated/schema.sql` dan `schema_usulan.sql` dimuat bersih ke
+PostgreSQL 18.
+
 ## [companion-2026.10.5] — 2026-10-10
 
 ### Ditambah — dampak: **aman** untuk n8n, tetapi **wajib base NocoDB baru**

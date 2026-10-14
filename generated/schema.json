@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.5",
+  "schema_version": "companion-2026.10.6",
   "insert_order": [
     "document",
     "contract",
@@ -2187,6 +2187,14 @@
             "kosong"
           ],
           "note": "saran sistem, BUKAN persetujuan. Yang diperiksa sistem hanya apakah nilai ada di dokumen, bukan apakah perannya benar"
+        },
+        {
+          "name": "status_reason",
+          "label": "Alasan Status",
+          "type": "text",
+          "nocodb_type": "SingleLineText",
+          "required": false,
+          "note": "kenapa sistem memberi Status Bukti ini, mis. aturan validasi yang dilanggar atau bacaan OCR kedua yang berbeda. Kosong bila tidak ada catatan"
         },
         {
           "name": "created_at",
