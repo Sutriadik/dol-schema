@@ -1,5 +1,5 @@
 // Open ADE: Delivery Ops Layer, skema companion NocoDB
-// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.6).
+// Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.7).
 // JANGAN diedit tangan: ubah model.py lalu jalankan `python -m dol_schema --emit`.
 // Buka di dbdiagram.io (tempel isi berkas ini) atau ekstensi DBML di VS Code.
 
@@ -343,6 +343,9 @@ Table field_review [headercolor: #E67E22] {
   id bigint [pk, increment]
   document_id integer [not null, note: 'ID Dokumen. dokumen dengan keputusan PM tidak boleh terhapus diam-diam']
   field_path text [not null, note: 'Nama Field']
+  extracted_field_id integer [note: 'ID Hasil Ekstraksi. keputusan per field; kosong untuk keputusan per baris rincian']
+  sph_item_id integer [note: 'ID Rincian SPH. keputusan satu baris penawaran di grid verifikasi SPH; Nama Field menunjuk barisnya, mis. \'Daftar Penawaran Harga[2]\'']
+  contract_item_id integer [note: 'ID Rincian Kontrak. keputusan satu baris BoQ kontrak; Nama Field menunjuk barisnya, mis. \'List Item/Barang[2]\'']
   reviewed_ai_value_text text [note: 'Nilai Sistem Saat Diperiksa. nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru']
   decision field_review_decision [not null, note: 'Keputusan']
   final_value_text text [note: 'Nilai Final. wajib diisi bila dikoreksi']
@@ -397,6 +400,9 @@ Ref: evidence_photo.contract_item_id > contract_item.id [delete: restrict]
 Ref: evidence_photo.requirement_id > contract_requirement.id [delete: restrict]
 Ref: extracted_field.document_id > document.id [delete: cascade]
 Ref: field_review.document_id > document.id [delete: restrict]
+Ref: field_review.extracted_field_id > extracted_field.id [delete: restrict]
+Ref: field_review.sph_item_id > sph_item.id [delete: restrict]
+Ref: field_review.contract_item_id > contract_item.id [delete: restrict]
 Ref: extraction_run.document_id > document.id [delete: cascade]
 
 // ---------------------------------------------------------------- pilihan nilai

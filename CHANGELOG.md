@@ -38,6 +38,25 @@ Langkah setiap perubahan skema:
 
 Belum ada perubahan.
 
+## [companion-2026.10.7] - 2026-10-16
+
+### Ditambah: dampak **aman** untuk n8n, tetapi base NocoDB perlu dibuat ulang
+- `field_review.extracted_field_id`, `field_review.sph_item_id`, `field_review.contract_item_id`:
+  rujukan opsional dari Keputusan PM ke baris yang diputuskan (satu field Hasil Ekstraksi,
+  atau satu baris Rincian SPH / Rincian Kontrak). Kunci keputusan tetap dokumen + Nama
+  Field, jadi n8n yang membaca kolom lama tidak perlu diubah.
+  Gunanya untuk PM di NocoDB: keputusan tampil di sebelah nilai sistem, antrean bisa
+  menyembunyikan field yang sudah diputuskan, dan grid verifikasi SPH (briefing hlm. 14,
+  Bulan 3) mencatat keputusan per baris penawaran. Untuk keputusan per baris, Nama Field
+  menunjuk barisnya, mis. `Daftar Penawaran Harga[2]`.
+  Prinsip satu penulis per tabel tetap: kolom ini diisi NocoDB saat PM mencatat keputusan,
+  bukan oleh pipeline. `ON DELETE RESTRICT`: baris yang sudah diputuskan PM tidak boleh
+  terhapus diam-diam saat dokumen diproses ulang.
+
+Relasi di NocoDB dibuat oleh `scripts/nocodb_setup.py --create-base` (dol-parser); base lama
+tidak punya kolom relasi ini. Diuji: `generated/schema.sql` dan `schema_usulan.sql` dimuat
+bersih ke PostgreSQL 18.
+
 ## [companion-2026.10.6] - 2026-10-15
 
 ### Ditambah: dampak **aman** untuk n8n, tetapi base NocoDB perlu kolom baru

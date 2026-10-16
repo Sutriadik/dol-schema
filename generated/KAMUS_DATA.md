@@ -1,6 +1,6 @@
 # Kamus Data Delivery Ops Layer
 
-Versi skema **companion-2026.10.6**. Dibangkitkan dari `dol_schema/model.py`, jadi jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
+Versi skema **companion-2026.10.7**. Dibangkitkan dari `dol_schema/model.py`, jadi jangan diedit tangan; ubah model lalu jalankan `python -m dol_schema --emit`.
 
 Setiap tabel punya dua nama: **judul** berbahasa Indonesia (yang tampil di NocoDB) dan
 **nama teknis** (dipakai kode, SQL, dan n8n). Setiap tabel juga punya kolom `id`,
@@ -310,12 +310,15 @@ Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Ni
 - **Diisi oleh:** PM (manusia)
 - **Tampil di NocoDB:** ya, judul baris = **Nama Field**
 - **Kunci anti-dobel:** ID Dokumen + Nama Field
-- **Induk:** Dokumen
+- **Induk:** Rincian Kontrak, Dokumen, Hasil Ekstraksi, Rincian SPH
 
 | Judul (NocoDB) | Nama teknis | Tipe | Wajib | Diisi | Keterangan |
 |---|---|---|---|---|---|
 | **ID Dokumen** | `document_id` | angka bulat | ya | PM | → Dokumen. dokumen dengan keputusan PM tidak boleh terhapus diam-diam |
 | **Nama Field** | `field_path` | teks | ya | PM |  |
+| **ID Hasil Ekstraksi** | `extracted_field_id` | angka bulat |  | PM | → Hasil Ekstraksi. keputusan per field; kosong untuk keputusan per baris rincian |
+| **ID Rincian SPH** | `sph_item_id` | angka bulat |  | PM | → Rincian SPH. keputusan satu baris penawaran di grid verifikasi SPH; Nama Field menunjuk barisnya, mis. 'Daftar Penawaran Harga[2]' |
+| **ID Rincian Kontrak** | `contract_item_id` | angka bulat |  | PM | → Rincian Kontrak. keputusan satu baris BoQ kontrak; Nama Field menunjuk barisnya, mis. 'List Item/Barang[2]' |
 | **Nilai Sistem Saat Diperiksa** | `reviewed_ai_value_text` | teks |  | PM | nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru |
 | **Keputusan** | `decision` | teks | ya | PM | Pilihan: `benar`, `dikoreksi`, `ditolak`. |
 | **Nilai Final** | `final_value_text` | teks |  | PM | wajib diisi bila dikoreksi |

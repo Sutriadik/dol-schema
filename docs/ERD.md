@@ -67,6 +67,9 @@ erDiagram
     DOCUMENT ||--o| BAST : "berkas BAST (asli / hasil generate)"
     DOCUMENT ||--o{ EXTRACTED_FIELD : "nilai + confidence per field"
     DOCUMENT ||--o{ FIELD_REVIEW : "koreksi manual PM per field"
+    EXTRACTED_FIELD |o--o{ FIELD_REVIEW : "keputusan untuk field ini"
+    SPH_ITEM |o--o{ FIELD_REVIEW : "keputusan per baris penawaran"
+    CONTRACT_ITEM |o--o{ FIELD_REVIEW : "keputusan per baris BoQ"
 
     CONTRACT ||--|{ CONTRACT_PARTY : "pihak penandatangan"
     CONTRACT ||--|{ CONTRACT_ITEM : "rincian BoQ"
@@ -191,6 +194,9 @@ erDiagram
         int id PK
         int document_id FK
         string field_path
+        int extracted_field_id FK "opsional"
+        int sph_item_id FK "opsional"
+        int contract_item_id FK "opsional"
         string decision "confirmed|corrected|rejected"
         text final_value_text
         string reviewed_by
@@ -368,6 +374,9 @@ Tabel inilah **sumber tunggal** untuk replikasi 1-to-1 ke tabel item BAST (lihat
 |---|---|---|---|
 | `document_id` | Number (Link) | ya | **FK** → `document.id` |
 | `field_path` | SingleLineText | ya | |
+| `extracted_field_id` | Number (Link) | - | **FK** → `extracted_field.id`, keputusan per field (sejak 2026.10.7) |
+| `sph_item_id` | Number (Link) | - | **FK** → `sph_item.id`, keputusan satu baris di grid verifikasi SPH |
+| `contract_item_id` | Number (Link) | - | **FK** → `contract_item.id`, keputusan satu baris BoQ kontrak |
 | `reviewed_ai_value_text` | LongText | - | nilai AI yang **dilihat PM saat memutuskan**. Kalau nilai AI berubah di run berikutnya, konfirmasi lama otomatis basi |
 | `decision` | SingleSelect | ya | `confirmed` / `corrected` / `rejected` |
 | `final_value_text` | LongText | - | nilai final versi PM |

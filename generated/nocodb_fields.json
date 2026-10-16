@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.6",
+  "schema_version": "companion-2026.10.7",
   "tables": {
     "document": {
       "title": "Dokumen",
@@ -709,6 +709,24 @@
           "uidt": "SingleLineText",
           "description": "Diisi PM.",
           "pv": true
+        },
+        {
+          "column_name": "extracted_field_id",
+          "title": "ID Hasil Ekstraksi",
+          "uidt": "Number",
+          "description": "Diisi PM. keputusan per field; kosong untuk keputusan per baris rincian"
+        },
+        {
+          "column_name": "sph_item_id",
+          "title": "ID Rincian SPH",
+          "uidt": "Number",
+          "description": "Diisi PM. keputusan satu baris penawaran di grid verifikasi SPH; Nama Field menunjuk barisnya, mis. 'Daftar Penawaran Harga[2]'"
+        },
+        {
+          "column_name": "contract_item_id",
+          "title": "ID Rincian Kontrak",
+          "uidt": "Number",
+          "description": "Diisi PM. keputusan satu baris BoQ kontrak; Nama Field menunjuk barisnya, mis. 'List Item/Barang[2]'"
         },
         {
           "column_name": "reviewed_ai_value_text",

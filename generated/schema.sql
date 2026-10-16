@@ -1,5 +1,5 @@
 -- Delivery Ops Layer: skema companion (tabel yang BERLAKU)
--- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.6).
+-- Dibangkitkan dari dol_schema/model.py (versi companion-2026.10.7).
 -- JANGAN diedit tangan: ubah model.py lalu bangkitkan ulang.
 
 -- Menjaga updated_at tetap benar tanpa bergantung pada aplikasi yang menulis.
@@ -417,6 +417,9 @@ CREATE TABLE IF NOT EXISTS field_review (
     id                         bigserial PRIMARY KEY,
     document_id                integer NOT NULL REFERENCES document(id) ON DELETE RESTRICT,
     field_path                 text NOT NULL,
+    extracted_field_id         integer REFERENCES extracted_field(id) ON DELETE RESTRICT,
+    sph_item_id                integer REFERENCES sph_item(id) ON DELETE RESTRICT,
+    contract_item_id           integer REFERENCES contract_item(id) ON DELETE RESTRICT,
     reviewed_ai_value_text     text,
     decision                   text NOT NULL,
     final_value_text           text,
@@ -429,12 +432,18 @@ CREATE TABLE IF NOT EXISTS field_review (
     CONSTRAINT field_review_decision_valid CHECK (decision IN ('benar', 'dikoreksi', 'ditolak'))
 );
 CREATE INDEX IF NOT EXISTS idx_field_review_document_id ON field_review(document_id);
+CREATE INDEX IF NOT EXISTS idx_field_review_extracted_field_id ON field_review(extracted_field_id);
+CREATE INDEX IF NOT EXISTS idx_field_review_sph_item_id ON field_review(sph_item_id);
+CREATE INDEX IF NOT EXISTS idx_field_review_contract_item_id ON field_review(contract_item_id);
 DROP TRIGGER IF EXISTS trg_field_review_updated_at ON field_review;
 CREATE TRIGGER trg_field_review_updated_at BEFORE UPDATE ON field_review
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 COMMENT ON TABLE field_review IS 'Keputusan PM -- Keputusan PM per field (hlm. 11 & 20). Pipeline tidak pernah menulis ke sini. Nilai yang boleh dipakai dokumen hilir hanya yang ada keputusannya di sini.';
 COMMENT ON COLUMN field_review.document_id IS 'ID Dokumen -- dokumen dengan keputusan PM tidak boleh terhapus diam-diam';
 COMMENT ON COLUMN field_review.field_path IS 'Nama Field';
+COMMENT ON COLUMN field_review.extracted_field_id IS 'ID Hasil Ekstraksi -- keputusan per field; kosong untuk keputusan per baris rincian';
+COMMENT ON COLUMN field_review.sph_item_id IS 'ID Rincian SPH -- keputusan satu baris penawaran di grid verifikasi SPH; Nama Field menunjuk barisnya, mis. ''Daftar Penawaran Harga[2]''';
+COMMENT ON COLUMN field_review.contract_item_id IS 'ID Rincian Kontrak -- keputusan satu baris BoQ kontrak; Nama Field menunjuk barisnya, mis. ''List Item/Barang[2]''';
 COMMENT ON COLUMN field_review.reviewed_ai_value_text IS 'Nilai Sistem Saat Diperiksa -- nilai yang DILIHAT PM saat memutuskan; bila nilai sistem berubah, keputusan lama tidak berlaku untuk nilai baru';
 COMMENT ON COLUMN field_review.decision IS 'Keputusan';
 COMMENT ON COLUMN field_review.final_value_text IS 'Nilai Final -- wajib diisi bila dikoreksi';

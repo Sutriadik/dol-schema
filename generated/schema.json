@@ -1,5 +1,5 @@
 {
-  "schema_version": "companion-2026.10.6",
+  "schema_version": "companion-2026.10.7",
   "insert_order": [
     "document",
     "contract",
@@ -2241,11 +2241,35 @@
           "placeholder": "_document_ref",
           "required": true,
           "on_delete": "RESTRICT"
+        },
+        {
+          "column": "extracted_field_id",
+          "references": "extracted_field.id",
+          "placeholder": "_extracted_field_ref",
+          "required": false,
+          "on_delete": "RESTRICT"
+        },
+        {
+          "column": "sph_item_id",
+          "references": "sph_item.id",
+          "placeholder": "_sph_item_ref",
+          "required": false,
+          "on_delete": "RESTRICT"
+        },
+        {
+          "column": "contract_item_id",
+          "references": "contract_item.id",
+          "placeholder": "_contract_item_ref",
+          "required": false,
+          "on_delete": "RESTRICT"
         }
       ],
       "human_columns": [
         "document_id",
         "field_path",
+        "extracted_field_id",
+        "sph_item_id",
+        "contract_item_id",
         "reviewed_ai_value_text",
         "decision",
         "final_value_text",
@@ -2270,6 +2294,36 @@
           "type": "text",
           "nocodb_type": "SingleLineText",
           "required": true
+        },
+        {
+          "name": "extracted_field_id",
+          "label": "ID Hasil Ekstraksi",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "fk": "extracted_field.id",
+          "on_delete": "RESTRICT",
+          "note": "keputusan per field; kosong untuk keputusan per baris rincian"
+        },
+        {
+          "name": "sph_item_id",
+          "label": "ID Rincian SPH",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "fk": "sph_item.id",
+          "on_delete": "RESTRICT",
+          "note": "keputusan satu baris penawaran di grid verifikasi SPH; Nama Field menunjuk barisnya, mis. 'Daftar Penawaran Harga[2]'"
+        },
+        {
+          "name": "contract_item_id",
+          "label": "ID Rincian Kontrak",
+          "type": "int",
+          "nocodb_type": "Number",
+          "required": false,
+          "fk": "contract_item.id",
+          "on_delete": "RESTRICT",
+          "note": "keputusan satu baris BoQ kontrak; Nama Field menunjuk barisnya, mis. 'List Item/Barang[2]'"
         },
         {
           "name": "reviewed_ai_value_text",

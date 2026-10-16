@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-SCHEMA_VERSION = "companion-2026.10.6"
+SCHEMA_VERSION = "companion-2026.10.7"
 
 # Pemilik tabel menurut briefing hlm. 12-15. Yang merancang & memelihara isi tabelnya.
 OWNERS = {
@@ -816,6 +816,36 @@ FIELD_REVIEW = Table(
             note="dokumen dengan keputusan PM tidak boleh terhapus diam-diam",
         ),
         Column("field_path", "text", "Nama Field", null=False),
+        # Rujukan ke baris yang diputuskan. Kunci keputusan tetap dokumen + Nama Field; relasi
+        # ini yang membuat NocoDB bisa menampilkan keputusan di sebelah nilai sistem dan
+        # menyembunyikan baris yang sudah diputuskan dari antrean PM. Diisi NocoDB saat PM
+        # mencatat keputusan dari baris itu, bukan oleh pipeline.
+        Column(
+            "extracted_field_id",
+            "int",
+            "ID Hasil Ekstraksi",
+            fk="extracted_field.id",
+            fk_on_delete="RESTRICT",
+            note="keputusan per field; kosong untuk keputusan per baris rincian",
+        ),
+        Column(
+            "sph_item_id",
+            "int",
+            "ID Rincian SPH",
+            fk="sph_item.id",
+            fk_on_delete="RESTRICT",
+            note="keputusan satu baris penawaran di grid verifikasi SPH; Nama Field menunjuk "
+            "barisnya, mis. 'Daftar Penawaran Harga[2]'",
+        ),
+        Column(
+            "contract_item_id",
+            "int",
+            "ID Rincian Kontrak",
+            fk="contract_item.id",
+            fk_on_delete="RESTRICT",
+            note="keputusan satu baris BoQ kontrak; Nama Field menunjuk barisnya, mis. "
+            "'List Item/Barang[2]'",
+        ),
         Column(
             "reviewed_ai_value_text",
             "text",
