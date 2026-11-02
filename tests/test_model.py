@@ -136,6 +136,19 @@ def test_status_dokumen_tidak_menghitung_keputusan_basi():
     assert "stale_count" in sql and "CREATE OR REPLACE VIEW nilai_terverifikasi" in sql
 
 
+def test_keputusan_per_baris_ikut_dibaca_view_verifikasi():
+    # Keputusan dari grid per baris (Nama Field "Daftar Penawaran Harga[2]") tidak cocok
+    # dengan Nama Field sel mana pun; tanpa keputusan_baris, baris yang sudah disetujui PM
+    # tidak pernah terhitung terverifikasi (evaluasi 2 Nov 2026).
+    sql = generate_ddl()
+    assert sql.index("CREATE OR REPLACE VIEW keputusan_baris") < sql.index(
+        "CREATE OR REPLACE VIEW field_review_stale"
+    )
+    for view in ("field_review_stale", "document_review_status", "nilai_terverifikasi"):
+        isi = sql.split(f"CREATE OR REPLACE VIEW {view} AS")[1].split(";")[0]
+        assert "keputusan_baris" in isi, view
+
+
 # kolom milik PM
 def test_payload_mesin_tidak_boleh_mengisi_kolom_pm():
     payload = {

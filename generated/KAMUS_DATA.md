@@ -51,6 +51,10 @@ Penyusunan BAST (nanti) hanya membaca nilai yang sudah diputuskan PM `benar` ata
 `dikoreksi` dan belum basi. Di PostgreSQL tersedia view `nilai_terverifikasi` untuk itu;
 field yang belum diperiksa dianggap kosong, bukan diambil dari nilai sistem.
 
+Keputusan **Cek Baris** di grid verifikasi berlaku untuk semua sel baris itu, kecuali sel
+yang diputuskan sendiri. Koreksi per baris tidak dipakai untuk mengisi sel. Bila satu angka di
+baris salah, koreksi sel itu sendiri.
+
 ## Tabel yang berlaku
 
 ### Kelompok: dokumen

@@ -36,7 +36,25 @@ Langkah setiap perubahan skema:
 
 ## [Belum dirilis]
 
-Belum ada perubahan.
+### Diperbaiki: dampak **aman**, `SCHEMA_VERSION` tetap (tidak ada tabel/kolom/pilihan nilai yang berubah)
+- View `nilai_terverifikasi`, `field_review_stale`, dan `document_review_status` kini membaca
+  keputusan per baris dari grid verifikasi (10.7). Sebelumnya keputusan dengan Nama Field
+  `Daftar Penawaran Harga[2]` tidak cocok dengan Nama Field sel mana pun
+  (`Daftar Penawaran Harga[2].Harga Satuan`). Akibatnya baris yang sudah disetujui PM tidak
+  pernah terhitung terverifikasi, dan keputusan baris yang basi tidak terlihat.
+- View baru `keputusan_baris`: keputusan per baris beserta tanda `basi`. Keputusan basi bila
+  Volume, Satuan, Harga Satuan, atau Jumlah Harga baris rincian kini berbeda dari Nilai Sistem
+  Saat Diperiksa, atau bila nilai itu tidak bisa dibaca. Angka dibandingkan sebagai angka.
+- Aturannya: `benar` per baris berlaku untuk setiap sel baris itu yang tidak punya keputusan
+  sendiri, karena keputusan sel lebih spesifik. `dikoreksi` per baris tidak dipecah ke sel,
+  karena Nilai Finalnya teks bebas. Sel-selnya tidak muncul di `nilai_terverifikasi`, tetapi
+  tetap dihitung sudah diputuskan di `document_review_status`, sama seperti `ditolak`.
+- `document_review_status.stale_count` kini menghitung sel, bukan baris keputusan.
+
+Base NocoDB tidak perlu dibuat ulang (NocoDB tidak memakai view). dol-parser
+`hitung_nilai_terverifikasi` mengikuti aturan yang sama. Diuji: `generated/schema.sql` dimuat
+ke PostgreSQL 18, lalu view dicoba dengan data contoh: baris disetujui, baris basi, baris
+tanpa satuan, keputusan sel yang menang atas baris, koreksi per baris, dan `[1]` vs `[10]`.
 
 ## [companion-2026.10.7] - 2026-10-16
 

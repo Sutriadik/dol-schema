@@ -75,7 +75,10 @@ CONVENTIONS = {
     "tidak boleh menyertakannya sama sekali, termasuk saat sinkron ulang.",
     "nilai_terverifikasi": "Dokumen hilir (mis. BAST) hanya boleh memakai nilai field yang "
     "punya keputusan PM 'benar' atau 'dikoreksi' dan belum basi "
-    "(view nilai_terverifikasi). Nilai sistem saja bukan persetujuan.",
+    "(view nilai_terverifikasi). Nilai sistem saja bukan persetujuan. Keputusan per baris "
+    "rincian (field_review dengan sph_item_id/contract_item_id) berlaku untuk sel baris itu "
+    "yang tidak punya keputusan sendiri, hanya bila 'benar' dan belum basi (view "
+    "keputusan_baris).",
     "dates": "Kolom date = string 'YYYY-MM-DD'; timestamptz = ISO 8601 dengan zona waktu.",
     "money": "Nominal dalam mata uang kolom currency (bawaan IDR), angka tanpa pemisah ribuan.",
     "mybhakti_refs": "Kolom mybhakti_*_ref diisi n8n dari API MyBhakti (read-only); bukan FK.",
